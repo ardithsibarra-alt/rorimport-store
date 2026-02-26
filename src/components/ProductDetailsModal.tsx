@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
-import { X, ShoppingBag, Box, Palette, Ruler } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { db } from '../lib/firebase';
+import { collection, onSnapshot, query, where } from 'firebase/firestore';
+import { X, Box, ShoppingBag, Ruler, Palette } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 
 const robotoStyle = { fontFamily: "'Roboto Condensed', sans-serif" };
 
-export default function ProductDetailsModal({ product, isOpen, onClose }: any) {
+function ProductDetailsModal({ product, isOpen, onClose }: any) {
   const { addToCart } = useCart();
   const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
   const [selectedColors, setSelectedColors] = useState<string[]>([]);
@@ -40,69 +42,54 @@ export default function ProductDetailsModal({ product, isOpen, onClose }: any) {
   };
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 md:p-6">
-      <div className="absolute inset-0 bg-black/90 backdrop-blur-xl" onClick={onClose}></div>
+    <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={onClose}></div>
       
-      {/* Contenedor con ancho máximo controlado para evitar que se desparrame en PC */}
-      <div className="relative bg-white w-full max-w-[500px] md:max-w-[900px] max-h-[95vh] overflow-y-auto rounded-[3rem] shadow-2xl flex flex-col md:flex-row animate-in zoom-in duration-300 scrollbar-hide">
+      <div className="relative bg-white w-full max-w-4xl h-auto max-h-[90vh] overflow-hidden rounded-[2.5rem] shadow-2xl flex flex-col md:flex-row animate-in zoom-in duration-300">
         
-        {/* BOTÓN CERRAR: Posición fija y limpia */}
+        {/* BOTÓN CERRAR: Ajustado para no solapar */}
         <button 
           onClick={onClose} 
-          className="absolute top-6 right-6 z-[110] p-3 bg-white/90 hover:bg-black hover:text-white rounded-full shadow-md transition-all active:scale-90"
+          className="absolute top-6 right-6 z-50 p-2 bg-zinc-100 hover:bg-black hover:text-white rounded-full transition-all"
         >
-          <X size={22}/>
+          <X size={20}/>
         </button>
         
-        {/* LADO IZQUIERDO: IMAGEN (Totalmente recta) */}
-        <div className="w-full md:w-[55%] bg-[#F3F4F6] flex items-center justify-center p-10 md:p-16">
+        {/* COLUMNA IZQUIERDA: IMAGEN (RECTA) */}
+        <div className="w-full md:w-1/2 bg-[#F9F9F9] flex items-center justify-center p-8">
           <img 
             src={product.imagen || product.image} 
             alt={product.nombre} 
-            className="w-full h-auto object-contain transform-none drop-shadow-3xl" 
-            style={{ transform: 'none' }} // Doble seguridad contra rotación
+            className={`w-full h-full object-contain transform-none ${!tieneStock ? 'grayscale opacity-40' : ''}`} 
           />
         </div>
 
-        {/* LADO DERECHO: CONTENIDO */}
-        <div className="w-full md:w-[45%] p-8 md:p-12 flex flex-col">
-          
-          <div className="mb-8">
-            <div className="flex flex-col gap-3 mb-4">
-              <span className="text-[11px] font-black text-[#d4af37] uppercase tracking-[0.4em]" style={robotoStyle}>
-                {product.categoria}
+        {/* COLUMNA DERECHA: DETALLES */}
+        <div className="w-full md:w-1/2 p-6 md:p-12 flex flex-col">
+          <div className="flex justify-between items-start mb-6">
+            <span className="text-[10px] font-black text-[#d4af37] uppercase tracking-[0.3em]">{product.categoria}</span>
+            
+            {/* STOCK: Movido ligeramente a la izquierda para no quedar bajo la X */}
+            <div className="mr-10"> 
+              <span className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[9px] font-black uppercase border ${tieneStock ? 'border-green-100 text-green-600' : 'border-red-100 text-red-600'}`}>
+                <Box size={10} /> {tieneStock ? `Stock: ${product.stock}` : 'Agotado'}
               </span>
-              
-              {/* STOCK: Ubicado debajo de la categoría, lejos de la X */}
-              <div className="flex">
-                <span className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-[10px] font-black uppercase border ${tieneStock ? 'bg-green-50 text-green-600 border-green-100' : 'bg-red-50 text-red-600 border-red-100'}`}>
-                  <Box size={12} />
-                  {tieneStock ? `STOCK: ${product.stock} UNIDADES` : 'SIN EXISTENCIAS'}
-                </span>
-              </div>
             </div>
-
-            <h2 className="text-3xl md:text-4xl font-serif italic text-black uppercase leading-tight mb-2">
-              {product.nombre}
-            </h2>
-            <p className="text-4xl font-black text-black" style={robotoStyle}>${product.precio}</p>
           </div>
+          
+          <h2 className="text-2xl md:text-4xl font-serif italic text-black mb-4 uppercase">{product.nombre}</h2>
+          <p className="text-4xl font-bold text-black mb-8">${product.precio}</p>
 
-          <div className="flex-grow space-y-8">
+          <div className="flex-grow space-y-6">
             {mostrarVariantes && colores.length > 0 && (
               <div className="space-y-3">
-                <span className="text-[10px] font-black uppercase text-zinc-400 tracking-widest flex items-center gap-2">
-                  <Palette size={14}/> Colores Disponibles
-                </span>
+                <div className="flex items-center gap-2 text-zinc-400">
+                  <Palette size={14} />
+                  <span className="text-[9px] font-bold uppercase tracking-widest">Colores</span>
+                </div>
                 <div className="flex flex-wrap gap-2">
                   {colores.map(c => (
-                    <button 
-                      key={c} 
-                      onClick={() => setSelectedColors([c])}
-                      className={`px-5 py-2.5 rounded-xl border-2 text-[10px] font-black uppercase transition-all ${selectedColors.includes(c) ? 'bg-black border-black text-white shadow-lg' : 'border-zinc-100 text-zinc-400 hover:border-zinc-200'}`}
-                    >
-                      {c}
-                    </button>
+                    <button key={c} onClick={() => setSelectedColors([c])} className={`px-4 py-2 rounded-xl border-2 text-[10px] font-black uppercase ${selectedColors.includes(c) ? 'bg-black border-black text-white' : 'border-zinc-100 text-zinc-400'}`}>{c}</button>
                   ))}
                 </div>
               </div>
@@ -110,37 +97,68 @@ export default function ProductDetailsModal({ product, isOpen, onClose }: any) {
 
             {mostrarVariantes && tallas.length > 0 && (
               <div className="space-y-3">
-                <span className="text-[10px] font-black uppercase text-zinc-400 tracking-widest flex items-center gap-2">
-                  <Ruler size={14}/> Tallas
-                </span>
-                <div className="flex flex-wrap gap-3">
+                <div className="flex items-center gap-2 text-zinc-400">
+                  <Ruler size={14} />
+                  <span className="text-[9px] font-bold uppercase tracking-widest">Tallas</span>
+                </div>
+                <div className="flex flex-wrap gap-2">
                   {tallas.map(t => (
-                    <button 
-                      key={t} 
-                      onClick={() => setSelectedSizes([t])}
-                      className={`w-14 h-14 rounded-xl border-2 font-black text-xs transition-all flex items-center justify-center ${selectedSizes.includes(t) ? 'bg-black border-black text-white shadow-xl scale-105' : 'border-zinc-100 text-zinc-600 hover:border-zinc-200'}`}
-                    >
-                      {t}
-                    </button>
+                    <button key={t} onClick={() => setSelectedSizes([t])} className={`w-12 h-12 rounded-xl border-2 font-black text-xs flex items-center justify-center ${selectedSizes.includes(t) ? 'bg-black border-black text-white' : 'border-zinc-100 text-zinc-600'}`}>{t}</button>
                   ))}
                 </div>
               </div>
             )}
           </div>
 
-          <div className="mt-10">
-            <button 
-              disabled={!tieneStock || (mostrarVariantes && tallas.length > 0 && selectedSizes.length === 0)}
-              onClick={handleAdd}
-              className="w-full bg-black text-white py-6 rounded-2xl font-black uppercase text-[12px] tracking-[0.3em] flex items-center justify-center gap-4 transition-all hover:bg-zinc-900 active:scale-95 disabled:bg-zinc-100 disabled:text-zinc-300 shadow-2xl"
-              style={robotoStyle}
-            >
-              <ShoppingBag size={20} />
-              {tieneStock ? 'AÑADIR A LA BOLSA' : 'AGOTADO'}
-            </button>
-          </div>
+          <button 
+            disabled={!tieneStock}
+            onClick={handleAdd}
+            className="w-full bg-black text-white py-5 rounded-2xl font-black uppercase text-[10px] tracking-[0.3em] mt-8 flex items-center justify-center gap-3 transition-all active:scale-95 disabled:bg-zinc-100"
+          >
+            <ShoppingBag size={18} />
+            {tieneStock ? 'Añadir al carrito' : 'Agotado'}
+          </button>
         </div>
       </div>
     </div>
+  );
+}
+
+export default function ProductGallery() {
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedProduct, setSelectedProduct] = useState<any>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  useEffect(() => {
+    // FILTRO: Solo productos con status 'active'
+    const q = query(collection(db, "productos"), where("status", "==", "active"));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const prods = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setProducts(prods as any);
+      setLoading(false);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  if (loading) return <div className="py-20 text-center uppercase font-black">Cargando...</div>;
+
+  return (
+    <section id="productos" className="py-20 bg-white">
+      <div className="container mx-auto px-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+          {products.map((p: any) => (
+            <div key={p.id} onClick={() => { setSelectedProduct(p); setIsModalOpen(true); }} className="group cursor-pointer">
+              <div className="relative aspect-[3/4] overflow-hidden bg-[#F9F9F9] mb-4 rounded-3xl shadow-sm">
+                <img src={p.imagen} alt={p.nombre} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+              </div>
+              <h3 className="font-serif italic text-sm uppercase">{p.nombre}</h3>
+              <p className="font-black text-xs">${p.precio}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+      <ProductDetailsModal product={selectedProduct} isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+    </section>
   );
 }
