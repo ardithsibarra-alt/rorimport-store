@@ -59,59 +59,28 @@ function ProductDetailsModal({ product, isOpen, onClose }: any) {
     onClose();
   };
 
-  const isDesktop = typeof window !== 'undefined' && window.innerWidth > 1024;
-
   return (
-    <div className="fixed inset-0 z-[2000] flex items-center justify-center p-0 md:p-4">
-      <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose}></div>
+    <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={onClose}></div>
       
-      <div 
-        style={{
-          display: isDesktop ? 'grid' : 'flex',
-          gridTemplateColumns: isDesktop ? '1fr 1fr' : 'none',
-          flexDirection: isDesktop ? 'row' : 'column',
-          width: isDesktop ? '1000px' : '100%',
-          height: isDesktop ? '600px' : 'auto',
-          maxHeight: '95vh',
-          backgroundColor: 'white',
-          borderRadius: '2rem',
-          overflow: 'hidden',
-          position: 'relative'
-        }}
-        className="shadow-2xl animate-in zoom-in duration-300"
-      >
+      <div className="relative bg-white w-full max-w-[1000px] md:h-[600px] rounded-[2rem] shadow-2xl flex flex-col md:flex-row overflow-hidden animate-in zoom-in duration-300">
+        
         <button 
           onClick={onClose} 
-          className="absolute top-6 right-6 z-50 p-2 bg-white/50 hover:bg-black hover:text-white rounded-full transition-all"
+          className="absolute top-6 right-6 z-50 p-2 bg-white/80 hover:bg-black hover:text-white rounded-full transition-all shadow-sm"
         >
           <X size={24} />
         </button>
         
-        {/* PANEL IZQUIERDO: IMAGEN */}
-        <div style={{
-          backgroundColor: '#f3f4f6',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '3rem',
-          height: isDesktop ? '100%' : '300px'
-        }}>
+        <div className="w-full md:w-1/2 bg-[#f3f4f6] flex items-center justify-center p-12 h-80 md:h-full shrink-0">
           <img 
             src={product.imagen || product.image} 
             alt={product.nombre} 
-            style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-            className="drop-shadow-2xl" 
+            className="w-full h-full object-contain drop-shadow-2xl" 
           />
         </div>
 
-        {/* PANEL DERECHO: INFO */}
-        <div style={{
-          padding: isDesktop ? '4rem' : '2rem',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          overflowY: 'auto'
-        }}>
+        <div className="w-full md:w-1/2 p-10 md:p-16 flex flex-col justify-center bg-white overflow-y-auto">
           <div className="mb-4">
             <span className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.3em]">{product.categoria}</span>
             <h2 className="text-4xl font-black text-black uppercase leading-tight mt-1">{product.nombre}</h2>
@@ -119,7 +88,7 @@ function ProductDetailsModal({ product, isOpen, onClose }: any) {
 
           <p className="text-5xl font-black text-black mb-8" style={robotoStyle}>${product.precio}</p>
 
-          <div className="space-y-8 flex-grow-0 mb-10">
+          <div className="space-y-8 mb-10">
             {mostrarVariantes && tallas.length > 0 && (
               <div>
                 <span className="text-[11px] font-black text-black uppercase tracking-widest block mb-4">Talla</span>
@@ -129,7 +98,7 @@ function ProductDetailsModal({ product, isOpen, onClose }: any) {
                       key={talla} 
                       onClick={() => toggleSize(talla)} 
                       className={`w-12 h-12 border-2 font-black text-xs transition-all ${
-                        selectedSizes.includes(talla) ? 'border-black bg-black text-white' : 'border-zinc-100 text-zinc-400'
+                        selectedSizes.includes(talla) ? 'border-black bg-black text-white' : 'border-zinc-100 text-zinc-400 hover:border-zinc-300'
                       }`}
                     >
                       {talla}
@@ -148,7 +117,7 @@ function ProductDetailsModal({ product, isOpen, onClose }: any) {
                       key={color} 
                       onClick={() => toggleColor(color)} 
                       className={`px-5 py-2 border-2 rounded-full text-[10px] font-black uppercase transition-all ${
-                        selectedColors.includes(color) ? 'border-black bg-black text-white' : 'border-zinc-100 text-zinc-400'
+                        selectedColors.includes(color) ? 'border-black bg-black text-white' : 'border-zinc-100 text-zinc-400 hover:border-zinc-200'
                       }`}
                     >
                       {color}
