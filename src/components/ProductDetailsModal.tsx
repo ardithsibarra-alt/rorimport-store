@@ -6,13 +6,6 @@ import { useCart } from '../context/CartContext';
 
 const robotoStyle = { fontFamily: "'Roboto Condensed', sans-serif" };
 
-// Estilo para ocultar la barra de desplazamiento visualmente
-const hideScrollbarStyle = {
-  msOverflowStyle: 'none',
-  scrollbarWidth: 'none',
-  WebkitOverflowScrolling: 'touch',
-};
-
 function ProductDetailsModal({ product, isOpen, onClose }: any) {
   const { addToCart } = useCart();
   const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
@@ -24,6 +17,20 @@ function ProductDetailsModal({ product, isOpen, onClose }: any) {
   const tallas = (mostrarVariantes && Array.isArray(product.tallas)) ? product.tallas : [];
   const colores = (mostrarVariantes && Array.isArray(product.colores)) ? product.colores : [];
   const tieneStock = Number(product.stock) > 0;
+
+  // Lógica de validación para habilitar el botón
+  const seleccionCompleta = () => {
+    if (!mostrarVariantes) return true;
+    const necesitaTalla = tallas.length > 0;
+    const necesitaColor = colores.length > 0;
+    
+    const tallaOk = necesitaTalla ? selectedSizes.length > 0 : true;
+    const colorOk = necesitaColor ? selectedColors.length > 0 : true;
+    
+    return tallaOk && colorOk;
+  };
+
+  const botonHabilitado = tieneStock && seleccionCompleta();
 
   const toggleColor = (color: string) => {
     setSelectedColors(prev => 
@@ -38,15 +45,6 @@ function ProductDetailsModal({ product, isOpen, onClose }: any) {
   };
 
   const handleAdd = () => {
-    if (mostrarVariantes) {
-      if (tallas.length > 0 && selectedSizes.length === 0) {
-        alert("Por favor, selecciona al menos una talla."); return;
-      }
-      if (colores.length > 0 && selectedColors.length === 0) {
-        alert("Por favor, selecciona al menos un color."); return;
-      }
-    }
-
     const variantName = `${product.nombre} ${selectedColors.length > 0 ? `(${selectedColors.join(', ')})` : ''} ${selectedSizes.length > 0 ? `- Tallas: ${selectedSizes.join(', ')}` : ''}`;
     
     addToCart({
@@ -66,6 +64,11 @@ function ProductDetailsModal({ product, isOpen, onClose }: any) {
 
   return (
     <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4">
+      <style>{`
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      `}</style>
+
       <div className="absolute inset-0 bg-black/90 backdrop-blur-md" onClick={onClose}></div>
       
       <div className="relative bg-white w-full max-w-5xl md:h-[580px] rounded-[3rem] shadow-2xl flex flex-col md:grid md:grid-cols-2 overflow-hidden animate-in zoom-in duration-300">
@@ -85,15 +88,7 @@ function ProductDetailsModal({ product, isOpen, onClose }: any) {
           />
         </div>
 
-        {/* CONTENEDOR DE INFO: Barra de scroll oculta mediante style e inyección de CSS */}
-        <div 
-          className="px-12 py-10 flex flex-col justify-center gap-6 h-full overflow-y-auto scrollbar-hide"
-          style={hideScrollbarStyle as any}
-        >
-          <style>{`
-            .scrollbar-hide::-webkit-scrollbar { display: none; }
-          `}</style>
-
+        <div className="px-12 py-10 flex flex-col justify-center gap-6 h-full overflow-y-auto no-scrollbar">
           <div className="flex flex-col gap-3">
             <div>
               <p className="text-[10px] font-black text-[#d4af37] uppercase tracking-[0.3em] mb-1">{product.categoria}</p>
@@ -142,7 +137,7 @@ function ProductDetailsModal({ product, isOpen, onClose }: any) {
                     <button 
                       key={t} 
                       onClick={() => toggleSize(t)} 
-                      className={`w-14 h-14 rounded-xl border-2 font-black text-xs transition-all relative flex items-center justify-center ${selectedSizes.includes(t) ? 'bg-black text-white border-black' : 'border-zinc-100 text-zinc-600 hover:border-zinc-300'}`}
+                      className={`w-14 h-14 rounded-xl border-2 font-black text-xs transition-all relative flex items-center justify-center ${selectedSizes.includes(t) ? 'bg-black text-white border-black scale-105' : 'border-zinc-100 text-zinc-600 hover:border-zinc-300'}`}
                     >
                       {t}
                       {selectedSizes.includes(t) && (
@@ -159,12 +154,16 @@ function ProductDetailsModal({ product, isOpen, onClose }: any) {
 
           <div className="mt-4">
             <button 
-              disabled={!tieneStock}
+              disabled={!botonHabilitado}
               onClick={handleAdd}
-              className="w-full bg-black text-white py-6 rounded-[2rem] font-black uppercase text-[12px] tracking-[0.3em] flex items-center justify-center gap-4 active:scale-95 disabled:bg-zinc-100 disabled:text-zinc-300 transition-all shadow-xl"
+              className={`w-full py-6 rounded-[2rem] font-black uppercase text-[12px] tracking-[0.3em] flex items-center justify-center gap-4 transition-all shadow-xl ${
+                botonHabilitado 
+                ? 'bg-black text-white active:scale-95 hover:bg-zinc-800' 
+                : 'bg-zinc-100 text-zinc-400 cursor-not-allowed shadow-none'
+              }`}
             >
               <ShoppingBag size={20} />
-              {tieneStock ? 'AÑADIR AL CARRITO' : 'AGOTADO'}
+              {!tieneStock ? 'AGOTADO' : !seleccionCompleta() ? 'SELECCIONA TALLA/COLOR' : 'AÑADIR AL CARRITO'}
             </button>
           </div>
         </div>
