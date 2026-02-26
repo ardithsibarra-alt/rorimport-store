@@ -18,11 +18,14 @@ function ProductDetailsModal({ product, isOpen, onClose }: any) {
   const colores = (mostrarVariantes && Array.isArray(product.colores)) ? product.colores : [];
   const tieneStock = Number(product.stock) > 0;
 
-  // Lógica de validación estricta
   const seleccionIncompleta = () => {
     if (!mostrarVariantes) return false;
-    const faltaTalla = tallas.length > 0 && selectedSizes.length === 0;
-    const faltaColor = colores.length > 0 && selectedColors.length === 0;
+    const necesitaTalla = tallas.length > 0;
+    const necesitaColor = colores.length > 0;
+    
+    const faltaTalla = necesitaTalla && selectedSizes.length === 0;
+    const faltaColor = necesitaColor && selectedColors.length === 0;
+    
     return faltaTalla || faltaColor;
   };
 
@@ -57,7 +60,7 @@ function ProductDetailsModal({ product, isOpen, onClose }: any) {
 
   return (
     <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4">
-      {/* Inyección de CSS para ocultar scrollbars */}
+      {/* CSS Inyectado para ocultar barras de scroll en todos los navegadores */}
       <style>{`
         .no-scrollbar::-webkit-scrollbar { display: none !important; width: 0 !important; }
         .no-scrollbar { -ms-overflow-style: none !important; scrollbar-width: none !important; }
@@ -87,7 +90,7 @@ function ProductDetailsModal({ product, isOpen, onClose }: any) {
           </div>
         </div>
 
-        {/* Panel derecho con scroll oculto */}
+        {/* Panel derecho: Agregué no-scrollbar para eliminar la barra gris */}
         <div className="w-full md:w-1/2 p-10 md:p-16 flex flex-col bg-white overflow-y-auto no-scrollbar">
           <div className="mb-8">
             <p className="text-[10px] font-black text-[#d4af37] uppercase tracking-[0.4em] mb-2">{product.categoria}</p>
@@ -139,7 +142,7 @@ function ProductDetailsModal({ product, isOpen, onClose }: any) {
             )}
           </div>
 
-          {/* Botón de acción único y validado */}
+          {/* Botón de acción único (Eliminado el botón de corazón y el flex gap-4) */}
           <div className="mt-12 flex">
             <button 
               disabled={estaBloqueado}
