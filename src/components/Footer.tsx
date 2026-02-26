@@ -4,16 +4,15 @@ export default function Footer() {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer id="contacto" className="bg-black text-white pt-20 pb-10">
+    <footer id="contacto" className="bg-black text-white pt-20 pb-32 md:pb-10">
       <div className="container mx-auto px-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-16 mb-16">
           
           {/* Logo y Descripción */}
           <div className="space-y-6">
             <div className="flex items-center space-x-4">
-              {/* LOGO: FONDO NEGRO, BORDE BLANCO */}
               <div className="w-12 h-12 bg-black rounded-full flex items-center justify-center border-2 border-white shadow-[0_0_15px_rgba(255,255,255,0.05)]">
-                <span className="text-white font-serif italic text-sm font-black tracking-tighter">SP</span>
+                <span className="text-white font-serif italic text-sm font-black tracking-tighter">RI</span>
               </div>
               <h3 className="text-2xl font-serif italic tracking-tighter uppercase font-bold">
                 RORIMPORT
@@ -33,7 +32,12 @@ export default function Footer() {
                 <div className="w-8 h-8 rounded-full border border-white/10 flex items-center justify-center group-hover:border-[#d4af37] transition-all">
                   <Phone size={14} className="text-gray-500 group-hover:text-white transition-colors" />
                 </div>
-                <a href="tel:+584128209111" className="text-sm text-gray-400 group-hover:text-white transition-colors tracking-wide">
+                <a 
+                  href="https://wa.me/584224421040" 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="text-sm text-gray-400 group-hover:text-white transition-colors tracking-wide"
+                >
                   +58 422-4421040
                 </a>
               </div>
