@@ -60,39 +60,39 @@ function ProductDetailsModal({ product, isOpen, onClose }: any) {
   };
 
   return (
-    <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4 lg:p-6">
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose}></div>
+    <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose}></div>
       
-      <div className="relative w-full max-w-[950px] bg-white rounded-2xl shadow-2xl flex flex-col lg:flex-row overflow-hidden animate-in zoom-in duration-300 max-h-[90vh] lg:max-h-[550px] lg:h-full">
+      <div className="relative bg-white w-full md:min-w-[950px] md:max-w-[1000px] md:h-[600px] rounded-[2rem] shadow-2xl flex flex-col md:flex-row overflow-hidden animate-in zoom-in duration-300">
         
         <button 
           onClick={onClose} 
-          className="absolute top-4 right-4 z-50 p-2 bg-gray-100 hover:bg-black hover:text-white rounded-full transition-colors"
+          className="absolute top-6 right-6 z-50 p-2 bg-gray-100 hover:bg-black hover:text-white rounded-full transition-all"
         >
           <X size={20} />
         </button>
         
-        <div className="w-full lg:w-1/2 bg-[#f4f4f5] flex items-center justify-center p-8 h-64 lg:h-auto shrink-0">
+        <div className="w-full md:w-1/2 bg-[#f3f4f6] flex items-center justify-center p-12 h-72 md:h-full">
           <img 
             src={product.imagen || product.image} 
             alt={product.nombre} 
-            className={`w-full h-full object-contain drop-shadow-xl transition-all duration-500 ${!tieneStock ? 'grayscale opacity-70' : ''}`} 
+            className="w-full h-full object-contain drop-shadow-2xl transform scale-110" 
           />
         </div>
 
-        <div className="w-full lg:w-1/2 p-8 lg:p-12 flex flex-col justify-center overflow-y-auto">
-          <div className="mb-4">
-            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{product.categoria}</span>
-            <h2 className="text-3xl lg:text-4xl font-black text-black mt-1 leading-tight">{product.nombre}</h2>
+        <div className="w-full md:w-1/2 p-10 md:p-16 flex flex-col justify-center bg-white">
+          <div className="mb-6">
+            <span className="text-[11px] font-bold text-gray-400 uppercase tracking-[0.3em]">{product.categoria}</span>
+            <h2 className="text-4xl font-black text-black mt-2 leading-tight uppercase">{product.nombre}</h2>
           </div>
 
-          <p className="text-3xl font-black text-black mb-8" style={robotoStyle}>${product.precio}</p>
+          <p className="text-5xl font-black text-black mb-10" style={robotoStyle}>${product.precio}</p>
 
-          <div className="space-y-6 flex-grow-0">
+          <div className="space-y-8 mb-10">
             {mostrarVariantes && tallas.length > 0 && (
               <div>
-                <span className="text-[11px] font-bold text-black uppercase tracking-wider block mb-3">Select Size</span>
-                <div className="flex flex-wrap gap-2">
+                <span className="text-[11px] font-bold text-black uppercase tracking-widest block mb-4">Tallas Disponibles</span>
+                <div className="flex flex-wrap gap-3">
                   {tallas.map((talla: string) => {
                     const isSelected = selectedSizes.includes(talla);
                     return (
@@ -100,9 +100,9 @@ function ProductDetailsModal({ product, isOpen, onClose }: any) {
                         key={talla} 
                         disabled={!tieneStock}
                         onClick={() => toggleSize(talla)} 
-                        className={`min-w-[42px] h-10 px-3 border text-xs font-semibold transition-all flex items-center justify-center ${
-                          isSelected ? 'border-[#3b82f6] text-[#3b82f6] shadow-sm' : 'border-gray-200 text-gray-600 hover:border-gray-400'
-                        } ${!tieneStock ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        className={`w-14 h-14 border-2 font-bold text-sm transition-all flex items-center justify-center ${
+                          isSelected ? 'border-black bg-black text-white shadow-md' : 'border-gray-100 text-gray-500 hover:border-gray-300'
+                        }`}
                       >
                         {talla}
                       </button>
@@ -114,7 +114,7 @@ function ProductDetailsModal({ product, isOpen, onClose }: any) {
 
             {mostrarVariantes && colores.length > 0 && (
               <div>
-                <span className="text-[11px] font-bold text-black uppercase tracking-wider block mb-3">Select Color</span>
+                <span className="text-[11px] font-bold text-black uppercase tracking-widest block mb-4">Colores</span>
                 <div className="flex flex-wrap gap-3">
                   {colores.map((color: string) => {
                     const isSelected = selectedColors.includes(color);
@@ -123,9 +123,9 @@ function ProductDetailsModal({ product, isOpen, onClose }: any) {
                         key={color} 
                         disabled={!tieneStock}
                         onClick={() => toggleColor(color)} 
-                        className={`px-4 py-2 border rounded-full text-[10px] font-bold uppercase transition-all flex items-center gap-2 ${
-                          isSelected ? 'border-black bg-black text-white' : 'border-gray-200 text-gray-600 hover:border-gray-400'
-                        } ${!tieneStock ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        className={`px-6 py-2 border-2 rounded-full text-[10px] font-bold uppercase transition-all flex items-center gap-2 ${
+                          isSelected ? 'border-black bg-black text-white' : 'border-gray-100 text-gray-400 hover:border-gray-300'
+                        }`}
                       >
                         {isSelected && <Check size={12} />}
                         {color}
@@ -137,20 +137,14 @@ function ProductDetailsModal({ product, isOpen, onClose }: any) {
             )}
           </div>
 
-          <div className="mt-10 flex items-center gap-4">
-            <button 
-              disabled={!tieneStock || (mostrarVariantes && tallas.length > 0 && selectedSizes.length === 0)}
-              onClick={handleAdd}
-              className="flex-1 bg-black text-white py-4 rounded-md font-bold text-[11px] uppercase tracking-wider flex items-center justify-center gap-2 hover:bg-gray-800 disabled:bg-gray-100 disabled:text-gray-400 transition-all"
-            >
-              <ShoppingBag size={16} /> 
-              {!tieneStock 
-                ? 'Agotado' 
-                : (mostrarVariantes && tallas.length > 0 && selectedSizes.length === 0)
-                  ? 'Elige tus Tallas'
-                  : 'Add to cart'}
-            </button>
-          </div>
+          <button 
+            disabled={!tieneStock}
+            onClick={handleAdd}
+            className="w-full bg-black text-white py-6 rounded-xl font-bold uppercase text-xs tracking-[0.3em] flex items-center justify-center gap-4 hover:bg-zinc-800 transition-all shadow-xl disabled:bg-gray-100 disabled:text-gray-300"
+          >
+            <ShoppingBag size={20} /> 
+            {tieneStock ? 'Añadir al Carrito' : 'Agotado'}
+          </button>
         </div>
       </div>
     </div>
@@ -179,36 +173,32 @@ export default function ProductGallery() {
     return () => unsubscribe();
   }, []);
 
-  if (loading) return <div className="py-20 text-center font-black tracking-widest text-zinc-300">CARGANDO PRODUCTOS...</div>;
+  if (loading) return <div className="py-20 text-center font-black tracking-widest text-zinc-300">CARGANDO...</div>;
 
   return (
-    <section id="productos" className="py-20 bg-white min-h-[500px]">
+    <section id="productos" className="py-20 bg-white">
       <div className="container mx-auto px-6">
-        {products.length === 0 ? (
-          <div className="text-center py-20 font-black text-zinc-400">NO SE ENCONTRARON PRODUCTOS DISPONIBLES</div>
-        ) : (
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
-            {products.map((p: any) => (
-              <div key={p.id} onClick={() => { setSelectedProduct(p); setIsModalOpen(true); }} className="cursor-pointer group">
-                <div className="relative aspect-[3/4] overflow-hidden bg-[#F9F9F9] rounded-[2rem] mb-6 shadow-sm group-hover:shadow-xl transition-all duration-500">
-                  <img 
-                    src={p.imagen || p.image} 
-                    alt={p.nombre} 
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
-                  />
-                  {Number(p.stock) <= 0 && (
-                    <div className="absolute inset-0 bg-white/60 backdrop-blur-[2px] flex items-center justify-center">
-                      <span className="bg-black text-white text-[8px] font-black px-3 py-1 rounded-full tracking-widest uppercase">Agotado</span>
-                    </div>
-                  )}
-                </div>
-                <p className="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-1">{p.categoria}</p>
-                <h3 className="font-serif italic text-base uppercase text-black mb-1 leading-none">{p.nombre}</h3>
-                <p className="font-black text-sm text-black" style={robotoStyle}>${p.precio}</p>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
+          {products.map((p: any) => (
+            <div key={p.id} onClick={() => { setSelectedProduct(p); setIsModalOpen(true); }} className="cursor-pointer group">
+              <div className="relative aspect-[3/4] overflow-hidden bg-[#F9F9F9] rounded-[2rem] mb-6 shadow-sm group-hover:shadow-xl transition-all duration-500">
+                <img 
+                  src={p.imagen || p.image} 
+                  alt={p.nombre} 
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
+                />
+                {Number(p.stock) <= 0 && (
+                  <div className="absolute inset-0 bg-white/60 backdrop-blur-[2px] flex items-center justify-center">
+                    <span className="bg-black text-white text-[8px] font-black px-3 py-1 rounded-full tracking-widest uppercase">Agotado</span>
+                  </div>
+                )}
               </div>
-            ))}
-          </div>
-        )}
+              <p className="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-1">{p.categoria}</p>
+              <h3 className="font-serif italic text-base uppercase text-black mb-1 leading-none">{p.nombre}</h3>
+              <p className="font-black text-sm text-black" style={robotoStyle}>${p.precio}</p>
+            </div>
+          ))}
+        </div>
       </div>
       <ProductDetailsModal product={selectedProduct} isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
     </section>
