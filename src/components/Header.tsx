@@ -1,4 +1,4 @@
-import { ShoppingCart, Menu, X, ShoppingBag } from 'lucide-react';
+import { ShoppingCart, Menu, X } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useCart } from '../context/CartContext';
 import { db } from '../lib/firebase';
@@ -33,10 +33,19 @@ export default function Header() {
     };
   }, []);
 
+  // Bloquear scroll cuando el menú está abierto
+  useEffect(() => {
+    if (isMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+  }, [isMenuOpen]);
+
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId);
     if (element) {
-      const offset = isScrolled ? 50 : 65; 
+      const offset = isScrolled ? 60 : 100; 
       const bodyRect = document.body.getBoundingClientRect().top;
       const elementRect = element.getBoundingClientRect().top;
       const elementPosition = elementRect - bodyRect;
@@ -50,63 +59,66 @@ export default function Header() {
     }
   };
 
+  const menuItems = [
+    { name: 'Inicio', id: 'inicio' },
+    { name: 'Colección', id: 'productos' },
+    { name: 'Importaciones', id: 'encargos' },
+    { name: 'Contacto', id: 'contacto' },
+  ];
+
   return (
     <>
-      <div className={`${isScrolled ? 'h-[50px]' : hasBanner ? 'h-[94px] md:h-[104px]' : 'h-[64px]'}`} />
+      {/* Spacer para evitar que el contenido se suba */}
+      <div className={`${isScrolled ? 'h-[64px]' : hasBanner ? 'h-[104px]' : 'h-[74px]'}`} />
 
       <header 
-        className={`fixed left-0 right-0 z-[100] transition-all duration-300 ${
+        className={`fixed left-0 right-0 z-[1000] transition-all duration-300 ${
           isScrolled 
-            ? 'top-0 bg-white/95 backdrop-blur-md shadow-sm' 
+            ? 'top-0 bg-white/90 backdrop-blur-md shadow-sm' 
             : `${hasBanner ? 'top-[44px] md:top-[40px]' : 'top-0'} bg-white`
-        } text-black`}
+        } text-black border-b border-gray-100`}
       >
-        <div className="container mx-auto px-8 py-2">
+        <div className="container mx-auto px-6 py-3">
           <div className="flex items-center justify-between">
+            {/* LOGO */}
             <div 
-              className="flex items-center space-x-4 cursor-pointer group"
+              className="flex items-center space-x-3 cursor-pointer group"
               onClick={() => scrollToSection('inicio')}
             >
-              <div className="w-10 h-10 bg-black border-2 border-black rounded-full flex items-center justify-center font-serif italic text-white transform group-hover:scale-105 transition-all shadow-md">
-                <span className="text-sm font-black tracking-tighter" style={robotoStyle}>SP</span>
+              <div className="w-9 h-9 bg-black rounded-full flex items-center justify-center font-serif italic text-white transform group-hover:scale-105 transition-all">
+                <span className="text-xs font-black tracking-tighter" style={robotoStyle}>SP</span>
               </div>
               <div className="flex flex-col">
-                <h1 className="text-3xl font-serif tracking-tighter italic text-black leading-[0.7] mt-1" style={robotoStyle}>
+                <h1 className="text-2xl font-black italic tracking-tighter leading-none" style={robotoStyle}>
                   RORIMPORT
                 </h1>
-                <span className="text-[8px] font-bold tracking-[0.4em] text-gray-400 uppercase mt-1" style={robotoStyle}>Since 2024</span>
+                <span className="text-[7px] font-bold tracking-[0.4em] text-gray-400 uppercase" style={robotoStyle}>Since 2024</span>
               </div>
             </div>
 
+            {/* NAV DESKTOP */}
             <nav className="hidden md:flex items-center space-x-8">
-              {[
-                { name: 'Inicio', id: 'inicio' },
-                { name: 'Colección', id: 'productos' },
-                { name: 'Importaciones', id: 'encargos' },
-                { name: 'Contacto', id: 'contacto' },
-              ].map((item) => (
+              {menuItems.map((item) => (
                 <button
                   key={item.id}
                   onClick={() => scrollToSection(item.id)}
-                  className="text-[11px] font-black uppercase tracking-[0.3em] hover:text-gray-400 transition-all relative group py-1"
+                  className="text-[10px] font-black uppercase tracking-[0.2em] hover:text-gray-400 transition-all"
                   style={robotoStyle}
                 >
                   {item.name}
-                  <span className="absolute bottom-0 left-0 w-0 h-[2px] bg-black transition-all duration-300 group-hover:w-full"></span>
                 </button>
               ))}
             </nav>
 
-            <div className="flex items-center space-x-4">
+            {/* ACCIONES */}
+            <div className="flex items-center space-x-2">
               <button
                 onClick={() => setIsCartOpen(true)}
-                className="relative flex items-center gap-2 px-4 py-2 bg-black text-white rounded-full transform hover:scale-105 active:scale-95 transition-all shadow-lg group"
-                style={robotoStyle}
+                className="relative p-2.5 bg-black text-white rounded-full active:scale-90 transition-all"
               >
-                <ShoppingCart size={15} strokeWidth={2.5} />
-                <span className="hidden md:inline text-[9px] font-black tracking-widest uppercase">Carrito</span>
+                <ShoppingCart size={18} strokeWidth={2.5} />
                 {getTotalItems() > 0 && (
-                  <span className="bg-white text-black text-[9px] font-black rounded-full w-4 h-4 flex items-center justify-center border border-black">
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[9px] font-black rounded-full w-5 h-5 flex items-center justify-center border-2 border-white">
                     {getTotalItems()}
                   </span>
                 )}
@@ -114,14 +126,35 @@ export default function Header() {
 
               <button
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className="md:hidden p-1.5 bg-gray-50 rounded-xl hover:bg-black hover:text-white transition-colors"
+                className="md:hidden p-2.5 bg-gray-100 rounded-full text-black active:scale-90 transition-all z-[1001]"
               >
-                {isMenuOpen ? <X size={18} /> : <Menu size={18} />}
+                {isMenuOpen ? <X size={20} /> : <Menu size={20} />}
               </button>
             </div>
           </div>
         </div>
       </header>
+
+      {/* MENÚ MÓVIL DESPLEGABLE */}
+      <div className={`fixed inset-0 bg-white z-[999] flex flex-col transition-all duration-500 ease-in-out ${isMenuOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+        <div className="flex flex-col items-start justify-center h-full px-10 gap-8">
+          <span className="text-gray-300 text-[10px] font-black tracking-[0.5em] uppercase" style={robotoStyle}>Menú</span>
+          {menuItems.map((item) => (
+            <button
+              key={item.id}
+              onClick={() => scrollToSection(item.id)}
+              className="text-5xl font-black italic tracking-tighter uppercase text-left active:text-gray-400 transition-colors"
+              style={robotoStyle}
+            >
+              {item.name}
+            </button>
+          ))}
+          <div className="w-full h-[1px] bg-gray-100 my-4" />
+          <div className="flex gap-4">
+            <div className="px-4 py-2 bg-yellow-400 rounded-full text-[10px] font-black uppercase tracking-widest">Nueva Colección</div>
+          </div>
+        </div>
+      </div>
 
       <CartModal isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
     </>
