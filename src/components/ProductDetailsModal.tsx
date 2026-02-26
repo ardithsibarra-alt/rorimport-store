@@ -59,54 +59,77 @@ function ProductDetailsModal({ product, isOpen, onClose }: any) {
     onClose();
   };
 
+  const isDesktop = typeof window !== 'undefined' && window.innerWidth > 1024;
+
   return (
-    <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-md" onClick={onClose}></div>
+    <div className="fixed inset-0 z-[2000] flex items-center justify-center p-0 md:p-4">
+      <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose}></div>
       
       <div 
-        className="relative bg-white w-full rounded-[2.5rem] shadow-2xl flex flex-col md:flex-row overflow-hidden animate-in zoom-in duration-300"
-        style={{ 
-          maxWidth: window.innerWidth > 768 ? '1000px' : '100%',
-          height: window.innerWidth > 768 ? '600px' : 'auto',
-          maxHeight: '90vh'
+        style={{
+          display: isDesktop ? 'grid' : 'flex',
+          gridTemplateColumns: isDesktop ? '1fr 1fr' : 'none',
+          flexDirection: isDesktop ? 'row' : 'column',
+          width: isDesktop ? '1000px' : '100%',
+          height: isDesktop ? '600px' : 'auto',
+          maxHeight: '95vh',
+          backgroundColor: 'white',
+          borderRadius: '2rem',
+          overflow: 'hidden',
+          position: 'relative'
         }}
+        className="shadow-2xl animate-in zoom-in duration-300"
       >
         <button 
           onClick={onClose} 
-          className="absolute top-6 right-6 z-50 p-3 bg-white/80 hover:bg-black hover:text-white rounded-full transition-all shadow-lg"
+          className="absolute top-6 right-6 z-50 p-2 bg-white/50 hover:bg-black hover:text-white rounded-full transition-all"
         >
           <X size={24} />
         </button>
         
-        <div className="w-full md:w-1/2 bg-[#f0f2f5] flex items-center justify-center p-12 h-80 md:h-full shrink-0">
+        {/* PANEL IZQUIERDO: IMAGEN */}
+        <div style={{
+          backgroundColor: '#f3f4f6',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '3rem',
+          height: isDesktop ? '100%' : '300px'
+        }}>
           <img 
             src={product.imagen || product.image} 
             alt={product.nombre} 
-            className="w-full h-full object-contain drop-shadow-2xl transform scale-105" 
+            style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+            className="drop-shadow-2xl" 
           />
         </div>
 
-        <div className="w-full md:w-1/2 p-10 md:p-16 flex flex-col justify-center bg-white overflow-y-auto">
-          <div className="mb-6">
-            <span className="text-[11px] font-black text-gray-400 uppercase tracking-[0.4em]">{product.categoria}</span>
-            <h2 className="text-4xl font-black text-black mt-2 leading-none uppercase tracking-tighter">{product.nombre}</h2>
+        {/* PANEL DERECHO: INFO */}
+        <div style={{
+          padding: isDesktop ? '4rem' : '2rem',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          overflowY: 'auto'
+        }}>
+          <div className="mb-4">
+            <span className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.3em]">{product.categoria}</span>
+            <h2 className="text-4xl font-black text-black uppercase leading-tight mt-1">{product.nombre}</h2>
           </div>
 
-          <div className="flex items-baseline gap-4 mb-10">
-            <p className="text-5xl font-black text-black" style={robotoStyle}>${product.precio}</p>
-          </div>
+          <p className="text-5xl font-black text-black mb-8" style={robotoStyle}>${product.precio}</p>
 
-          <div className="space-y-10 mb-12">
+          <div className="space-y-8 flex-grow-0 mb-10">
             {mostrarVariantes && tallas.length > 0 && (
               <div>
-                <span className="text-[10px] font-black text-black uppercase tracking-widest block mb-4">Tallas</span>
+                <span className="text-[11px] font-black text-black uppercase tracking-widest block mb-4">Talla</span>
                 <div className="flex flex-wrap gap-2">
                   {tallas.map((talla: string) => (
                     <button 
                       key={talla} 
                       onClick={() => toggleSize(talla)} 
-                      className={`w-14 h-14 border-2 font-black text-xs transition-all flex items-center justify-center ${
-                        selectedSizes.includes(talla) ? 'border-black bg-black text-white' : 'border-gray-100 text-gray-400 hover:border-gray-300'
+                      className={`w-12 h-12 border-2 font-black text-xs transition-all ${
+                        selectedSizes.includes(talla) ? 'border-black bg-black text-white' : 'border-zinc-100 text-zinc-400'
                       }`}
                     >
                       {talla}
@@ -118,17 +141,16 @@ function ProductDetailsModal({ product, isOpen, onClose }: any) {
 
             {mostrarVariantes && colores.length > 0 && (
               <div>
-                <span className="text-[10px] font-black text-black uppercase tracking-widest block mb-4">Colores</span>
+                <span className="text-[11px] font-black text-black uppercase tracking-widest block mb-4">Color</span>
                 <div className="flex flex-wrap gap-2">
                   {colores.map((color: string) => (
                     <button 
                       key={color} 
                       onClick={() => toggleColor(color)} 
-                      className={`px-6 py-2 border-2 rounded-full text-[10px] font-black uppercase transition-all flex items-center gap-2 ${
-                        selectedColors.includes(color) ? 'border-black bg-black text-white' : 'border-gray-100 text-gray-400 hover:border-gray-200'
+                      className={`px-5 py-2 border-2 rounded-full text-[10px] font-black uppercase transition-all ${
+                        selectedColors.includes(color) ? 'border-black bg-black text-white' : 'border-zinc-100 text-zinc-400'
                       }`}
                     >
-                      {selectedColors.includes(color) && <Check size={12} />}
                       {color}
                     </button>
                   ))}
@@ -140,10 +162,10 @@ function ProductDetailsModal({ product, isOpen, onClose }: any) {
           <button 
             disabled={!tieneStock}
             onClick={handleAdd}
-            className="w-full bg-black text-white py-6 rounded-2xl font-black uppercase text-xs tracking-[0.3em] flex items-center justify-center gap-4 hover:bg-zinc-800 transition-all shadow-xl disabled:bg-gray-100 disabled:text-gray-300"
+            className="w-full bg-black text-white py-5 rounded-xl font-black uppercase text-[11px] tracking-[0.2em] flex items-center justify-center gap-3 active:scale-95 transition-all shadow-lg disabled:bg-zinc-100 disabled:text-zinc-300"
           >
-            <ShoppingBag size={20} /> 
-            {tieneStock ? 'Añadir al Carrito' : 'Sin Stock'}
+            <ShoppingBag size={18} /> 
+            {tieneStock ? 'Añadir al Carrito' : 'Agotado'}
           </button>
         </div>
       </div>
@@ -178,7 +200,7 @@ export default function ProductGallery() {
   return (
     <section id="productos" className="py-20 bg-white">
       <div className="container mx-auto px-6">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 md:gap-12">
           {products.map((p: any) => (
             <div key={p.id} onClick={() => { setSelectedProduct(p); setIsModalOpen(true); }} className="cursor-pointer group">
               <div className="relative aspect-[3/4] overflow-hidden bg-[#F9F9F9] rounded-[2rem] mb-6 shadow-sm group-hover:shadow-xl transition-all duration-500">
