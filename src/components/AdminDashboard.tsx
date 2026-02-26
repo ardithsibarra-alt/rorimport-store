@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { db } from '../lib/firebase';
+import { db, auth } from '../lib/firebase';
+import { signInWithEmailAndPassword, onAuthStateChanged, signOut } from 'firebase/auth';
 import { collection, query, orderBy, onSnapshot, updateDoc, doc, deleteDoc, addDoc, serverTimestamp } from 'firebase/firestore';
 import { 
   Phone, MapPin, CheckCircle, Lock, Trash2, DollarSign, AlertTriangle, Save, 
-  Plus, X, Upload, Loader2, Edit2, Globe, Truck, Package, Tag, Clock, ChevronDown
+  Plus, X, Upload, Loader2, Edit2, Globe, Truck, Package, Tag, Clock, ChevronDown, LogOut
 } from 'lucide-react';
 
 const robotoStyle = { fontFamily: "'Roboto Condensed', sans-serif" };
@@ -56,13 +57,13 @@ export default function AdminDashboard() {
   const [orders, setOrders] = useState([]);
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState(["ROPA", "CALZADO", "GYM", "HOGAR", "ACCESORIOS"]);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [pin, setPin] = useState('');
+  const [user, setUser] = useState(null);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [activeTab, setActiveTab] = useState('pedidos');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   
-  const ADMIN_PIN = "3312";
   const IMGBB_API_KEY = "1669faef131ea5deed75fcd400c486ec"; 
 
   const [config, setConfig] = useState({ tasaDolar: 0, modoMantenimiento: false, bannerTexto: "" });
@@ -72,7 +73,14 @@ export default function AdminDashboard() {
   });
 
   useEffect(() => {
-    if (!isAuthenticated) return;
+    const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+    });
+    return () => unsubscribeAuth();
+  }, []);
+
+  useEffect(() => {
+    if (!user) return;
     
     const unsubOrders = onSnapshot(query(collection(db, "pedidos"), orderBy("fecha", "desc")), (snapshot) => {
       setOrders(snapshot.docs.map(doc => {
@@ -101,7 +109,18 @@ export default function AdminDashboard() {
     });
 
     return () => { unsubOrders(); unsubProducts(); unsubConfig(); };
-  }, [isAuthenticated]);
+  }, [user]);
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+    } catch (error) {
+      alert("Credenciales incorrectas o usuario no autorizado");
+    }
+  };
+
+  const handleLogout = () => signOut(auth);
 
   const stats = orders.reduce((acc, order) => {
     const monto = Number(order.total || 0);
@@ -162,15 +181,17 @@ export default function AdminDashboard() {
     }
   };
 
-  if (!isAuthenticated) {
+  if (!user) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center p-4">
-        <form onSubmit={(e) => { e.preventDefault(); if (pin === ADMIN_PIN) setIsAuthenticated(true); else alert("PIN Incorrecto"); }} 
+        <form onSubmit={handleLogin} 
               className="bg-white p-8 rounded-[2rem] w-full max-w-[320px]">
-          <h2 className="text-center font-black italic mb-6" style={robotoStyle}>ROR ADMIN</h2>
-          <input type="password" value={pin} onChange={(e) => setPin(e.target.value)} placeholder="PIN" 
-                 className="w-full p-4 bg-zinc-100 rounded-xl mb-4 text-center font-black" />
-          <button type="submit" className="w-full bg-black text-white py-4 rounded-xl font-black uppercase text-xs" style={robotoStyle}>Acceder</button>
+          <h2 className="text-center font-black italic mb-6 text-xl" style={robotoStyle}>ROR ADMIN</h2>
+          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="CORREO" 
+                 className="w-full p-4 bg-zinc-100 rounded-xl mb-3 text-sm font-bold outline-none" required />
+          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="CONTRASEÑA" 
+                 className="w-full p-4 bg-zinc-100 rounded-xl mb-6 text-sm font-bold outline-none" required />
+          <button type="submit" className="w-full bg-black text-white py-4 rounded-xl font-black uppercase text-xs hover:bg-zinc-800 transition-colors" style={robotoStyle}>Entrar con Seguridad</button>
         </form>
       </div>
     );
@@ -178,15 +199,25 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-[#F8F8F8] pb-20">
-      <header className="bg-white border-b p-6 sticky top-0 z-40 flex justify-between items-center">
-        <h1 className="font-black italic text-2xl tracking-tighter" style={robotoStyle}>ROR CONSOLE</h1>
-        <div className="flex bg-zinc-100 p-1 rounded-xl">
-          {['pedidos', 'inventario', 'config'].map(t => (
-            <button key={t} onClick={() => setActiveTab(t)} className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase ${activeTab === t ? 'bg-black text-white' : 'text-zinc-400'}`} style={robotoStyle}>{t}</button>
-          ))}
+      <header className="bg-white border-b p-6 sticky top-0 z-40 flex justify-between items-center shadow-sm">
+        <div className="flex flex-col">
+            <h1 className="font-black italic text-2xl tracking-tighter" style={robotoStyle}>ROR CONSOLE</h1>
+            <span className="text-[8px] font-bold text-green-500 uppercase tracking-widest flex items-center gap-1"><CheckCircle size={8}/> Conexión Segura</span>
+        </div>
+        
+        <div className="flex items-center gap-4">
+            <div className="hidden md:flex bg-zinc-100 p-1 rounded-xl">
+            {['pedidos', 'inventario', 'config'].map(t => (
+                <button key={t} onClick={() => setActiveTab(t)} className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase ${activeTab === t ? 'bg-black text-white' : 'text-zinc-400'}`} style={robotoStyle}>{t}</button>
+            ))}
+            </div>
+            <button onClick={handleLogout} className="p-2 text-zinc-400 hover:text-red-500 transition-colors">
+                <LogOut size={20}/>
+            </button>
         </div>
       </header>
 
+      {/* El resto del código del dashboard se mantiene igual... */}
       <main className="max-w-6xl mx-auto p-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
           <div className="bg-black text-white p-6 rounded-3xl">
