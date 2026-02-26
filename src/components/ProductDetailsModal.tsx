@@ -61,26 +61,25 @@ export default function ProductDetailsModal({ product, isOpen, onClose }: any) {
     <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/90 backdrop-blur-md" onClick={onClose}></div>
       
-      {/* Contenedor Centrado y Ajustado a la Imagen */}
-      <div className="relative bg-white w-full max-w-[420px] max-h-[90vh] overflow-y-auto rounded-[2.5rem] shadow-2xl animate-in zoom-in duration-300 scrollbar-hide">
+      {/* Contenedor Centrado: Máximo 400px para mantener estética de tarjeta vertical */}
+      <div className="relative bg-white w-full max-w-[400px] max-h-[90vh] overflow-y-auto rounded-[2.5rem] shadow-2xl animate-in zoom-in duration-300 scrollbar-hide">
         
-        {/* Botón Cerrar Flotante */}
+        {/* Botón Cerrar */}
         <button 
           onClick={onClose} 
-          className="absolute top-5 right-5 z-50 p-2.5 bg-white/80 backdrop-blur-md border border-zinc-100 rounded-full active:scale-90 transition-all shadow-sm"
+          className="absolute top-5 right-5 z-50 p-2.5 bg-zinc-100/80 backdrop-blur-md rounded-full active:scale-90 transition-all shadow-sm"
         >
           <X size={20} className="text-zinc-900" />
         </button>
         
-        {/* Sección de Imagen (Ancho Completo) */}
+        {/* Imagen: Removido todo efecto de rotación o escala */}
         <div className="w-full aspect-square bg-[#f8f9fa] flex items-center justify-center p-10 relative overflow-hidden">
           <img 
             src={product.imagen || product.image} 
             alt={product.nombre} 
-            className={`w-full h-full object-contain drop-shadow-2xl transition-transform duration-500 hover:scale-110 ${!tieneStock ? 'grayscale opacity-70' : ''}`} 
+            className={`w-full h-full object-contain ${!tieneStock ? 'grayscale opacity-70' : ''}`} 
           />
           
-          {/* Badge de Categoría Flotante */}
           <div className="absolute top-6 left-6">
              <span className="bg-black text-white text-[8px] font-black px-3 py-1 rounded-full uppercase tracking-widest" style={robotoStyle}>
                 {product.categoria}
@@ -88,28 +87,28 @@ export default function ProductDetailsModal({ product, isOpen, onClose }: any) {
           </div>
         </div>
 
-        {/* Detalles Ajustados al Ancho de la Imagen */}
+        {/* Información Detallada */}
         <div className="p-8 space-y-6">
-          <div className="flex justify-between items-end">
-            <div>
-              <h2 className="text-2xl font-black text-[#1e3a5f] uppercase leading-none tracking-tighter mb-2" style={robotoStyle}>
+          <div className="flex justify-between items-start gap-4">
+            <div className="flex-1">
+              <h2 className="text-2xl font-black text-[#1e3a5f] uppercase leading-tight tracking-tighter mb-1" style={robotoStyle}>
                 {product.nombre}
               </h2>
               <p className="text-3xl font-black text-[#1e3a5f]" style={robotoStyle}>${product.precio}</p>
             </div>
-            <span className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[9px] font-black uppercase ${tieneStock ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>
-              <Box size={10} /> {tieneStock ? `${product.stock} DISPONIBLES` : 'Agotado'}
-            </span>
+            <div className={`shrink-0 flex items-center gap-1.5 px-3 py-1 rounded-full text-[9px] font-black uppercase h-fit ${tieneStock ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>
+              <Box size={10} /> {tieneStock ? `STOCK: ${product.stock}` : 'Agotado'}
+            </div>
           </div>
 
           <hr className="border-zinc-100" />
 
-          {/* Variantes de Color */}
+          {/* Colores */}
           {mostrarVariantes && colores.length > 0 && (
             <div className="space-y-3">
               <div className="flex items-center gap-2 text-zinc-400">
                 <Palette size={14} />
-                <span className="text-[10px] font-black uppercase tracking-widest" style={robotoStyle}>Colores</span>
+                <span className="text-[10px] font-black uppercase tracking-widest" style={robotoStyle}>Colores Disponibles</span>
               </div>
               <div className="flex flex-wrap gap-2">
                 {colores.map((color: string) => (
@@ -117,7 +116,7 @@ export default function ProductDetailsModal({ product, isOpen, onClose }: any) {
                     key={color} 
                     onClick={() => toggleColor(color)} 
                     className={`px-4 py-2 rounded-xl border-2 text-[10px] font-black uppercase transition-all ${
-                      selectedColors.includes(color) ? 'border-[#1e3a5f] bg-[#1e3a5f] text-white shadow-md' : 'border-zinc-100 bg-zinc-50 text-zinc-400'
+                      selectedColors.includes(color) ? 'border-[#1e3a5f] bg-[#1e3a5f] text-white shadow-md' : 'border-zinc-100 bg-zinc-50 text-zinc-400 hover:border-zinc-200'
                     }`}
                     style={robotoStyle}
                   >
@@ -128,12 +127,12 @@ export default function ProductDetailsModal({ product, isOpen, onClose }: any) {
             </div>
           )}
 
-          {/* Variantes de Talla */}
+          {/* Tallas */}
           {mostrarVariantes && tallas.length > 0 && (
             <div className="space-y-3">
               <div className="flex items-center gap-2 text-zinc-400">
                 <Ruler size={14} />
-                <span className="text-[10px] font-black uppercase tracking-widest" style={robotoStyle}>Tallas</span>
+                <span className="text-[10px] font-black uppercase tracking-widest" style={robotoStyle}>Tallas Disponibles</span>
               </div>
               <div className="flex flex-wrap gap-2">
                 {tallas.map((talla: string) => (
@@ -141,7 +140,7 @@ export default function ProductDetailsModal({ product, isOpen, onClose }: any) {
                     key={talla} 
                     onClick={() => toggleSize(talla)} 
                     className={`w-12 h-12 rounded-xl border-2 font-black text-[10px] transition-all flex items-center justify-center ${
-                      selectedSizes.includes(talla) ? 'border-[#d4af37] bg-[#d4af37] text-white shadow-lg' : 'border-zinc-100 bg-zinc-50 text-zinc-600'
+                      selectedSizes.includes(talla) ? 'border-[#d4af37] bg-[#d4af37] text-white shadow-lg' : 'border-zinc-100 bg-zinc-50 text-zinc-600 hover:border-zinc-200'
                     }`}
                     style={robotoStyle}
                   >
@@ -152,7 +151,7 @@ export default function ProductDetailsModal({ product, isOpen, onClose }: any) {
             </div>
           )}
 
-          {/* Botón Final */}
+          {/* Acción */}
           <button 
             disabled={!tieneStock || (mostrarVariantes && tallas.length > 0 && selectedSizes.length === 0)}
             onClick={handleAdd}
@@ -160,7 +159,7 @@ export default function ProductDetailsModal({ product, isOpen, onClose }: any) {
             style={robotoStyle}
           >
             <ShoppingBag size={18} /> 
-            {!tieneStock ? 'PRODUCTO AGOTADO' : 'Añadir al Carrito'}
+            {tieneStock ? 'Añadir al Carrito' : 'Agotado'}
           </button>
         </div>
       </div>
