@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
-import { X, ShoppingBag, Ruler, Palette, Check, Box } from 'lucide-react';
+import { X, ShoppingBag, Ruler, Palette, Box } from 'lucide-react';
 import { useCart } from '../context/CartContext';
+
+const robotoStyle = { fontFamily: "'Roboto Condensed', sans-serif" };
 
 export default function ProductDetailsModal({ product, isOpen, onClose }: any) {
   const { addToCart } = useCart();
@@ -56,39 +58,58 @@ export default function ProductDetailsModal({ product, isOpen, onClose }: any) {
   };
 
   return (
-    <div className="fixed inset-0 z-[1100] flex items-end md:items-center justify-center">
-      <div className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={onClose}></div>
+    <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/90 backdrop-blur-md" onClick={onClose}></div>
       
-      <div className="relative bg-white w-full max-w-4xl h-[92vh] md:h-auto md:max-h-[90vh] overflow-y-auto rounded-t-[2.5rem] md:rounded-[2.5rem] shadow-2xl flex flex-col md:flex-row animate-in slide-in-from-bottom duration-300">
+      {/* Contenedor Centrado y Ajustado a la Imagen */}
+      <div className="relative bg-white w-full max-w-[420px] max-h-[90vh] overflow-y-auto rounded-[2.5rem] shadow-2xl animate-in zoom-in duration-300 scrollbar-hide">
         
-        <button onClick={onClose} className="absolute top-6 right-6 z-50 p-3 bg-zinc-100 rounded-full active:scale-90 transition-transform">
-          <X size={20} />
+        {/* Botón Cerrar Flotante */}
+        <button 
+          onClick={onClose} 
+          className="absolute top-5 right-5 z-50 p-2.5 bg-white/80 backdrop-blur-md border border-zinc-100 rounded-full active:scale-90 transition-all shadow-sm"
+        >
+          <X size={20} className="text-zinc-900" />
         </button>
         
-        <div className="w-full md:w-1/2 bg-[#f8f9fa] flex items-center justify-center p-8 min-h-[350px]">
+        {/* Sección de Imagen (Ancho Completo) */}
+        <div className="w-full aspect-square bg-[#f8f9fa] flex items-center justify-center p-10 relative overflow-hidden">
           <img 
             src={product.imagen || product.image} 
             alt={product.nombre} 
-            className={`w-full max-h-[300px] md:max-h-none object-contain drop-shadow-2xl md:-rotate-12 ${!tieneStock ? 'grayscale opacity-70' : ''}`} 
+            className={`w-full h-full object-contain drop-shadow-2xl transition-transform duration-500 hover:scale-110 ${!tieneStock ? 'grayscale opacity-70' : ''}`} 
           />
+          
+          {/* Badge de Categoría Flotante */}
+          <div className="absolute top-6 left-6">
+             <span className="bg-black text-white text-[8px] font-black px-3 py-1 rounded-full uppercase tracking-widest" style={robotoStyle}>
+                {product.categoria}
+             </span>
+          </div>
         </div>
 
-        <div className="w-full md:w-1/2 p-6 md:p-12 flex flex-col pb-32 md:pb-12">
-          <div className="flex justify-between items-start mb-2">
-            <span className="text-[10px] font-black text-[#d4af37] uppercase tracking-[0.3em]">{product.categoria}</span>
+        {/* Detalles Ajustados al Ancho de la Imagen */}
+        <div className="p-8 space-y-6">
+          <div className="flex justify-between items-end">
+            <div>
+              <h2 className="text-2xl font-black text-[#1e3a5f] uppercase leading-none tracking-tighter mb-2" style={robotoStyle}>
+                {product.nombre}
+              </h2>
+              <p className="text-3xl font-black text-[#1e3a5f]" style={robotoStyle}>${product.precio}</p>
+            </div>
             <span className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[9px] font-black uppercase ${tieneStock ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>
-              <Box size={10} /> {tieneStock ? `Stock: ${product.stock}` : 'Agotado'}
+              <Box size={10} /> {tieneStock ? `${product.stock} DISPONIBLES` : 'Agotado'}
             </span>
           </div>
 
-          <h2 className="text-2xl md:text-3xl font-black text-[#1e3a5f] uppercase mb-2">{product.nombre}</h2>
-          <p className="text-3xl font-black text-[#1e3a5f] mb-6">${product.precio}</p>
+          <hr className="border-zinc-100" />
 
+          {/* Variantes de Color */}
           {mostrarVariantes && colores.length > 0 && (
-            <div className="mb-6">
-              <div className="flex items-center gap-2 mb-3 text-zinc-400">
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 text-zinc-400">
                 <Palette size={14} />
-                <span className="text-[10px] font-black uppercase">Colores</span>
+                <span className="text-[10px] font-black uppercase tracking-widest" style={robotoStyle}>Colores</span>
               </div>
               <div className="flex flex-wrap gap-2">
                 {colores.map((color: string) => (
@@ -96,8 +117,9 @@ export default function ProductDetailsModal({ product, isOpen, onClose }: any) {
                     key={color} 
                     onClick={() => toggleColor(color)} 
                     className={`px-4 py-2 rounded-xl border-2 text-[10px] font-black uppercase transition-all ${
-                      selectedColors.includes(color) ? 'border-[#1e3a5f] bg-[#1e3a5f] text-white' : 'border-zinc-100 text-zinc-400'
+                      selectedColors.includes(color) ? 'border-[#1e3a5f] bg-[#1e3a5f] text-white shadow-md' : 'border-zinc-100 bg-zinc-50 text-zinc-400'
                     }`}
+                    style={robotoStyle}
                   >
                     {color}
                   </button>
@@ -106,20 +128,22 @@ export default function ProductDetailsModal({ product, isOpen, onClose }: any) {
             </div>
           )}
 
+          {/* Variantes de Talla */}
           {mostrarVariantes && tallas.length > 0 && (
-            <div className="mb-8">
-              <div className="flex items-center gap-2 mb-3 text-zinc-400">
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 text-zinc-400">
                 <Ruler size={14} />
-                <span className="text-[10px] font-black uppercase">Tallas</span>
+                <span className="text-[10px] font-black uppercase tracking-widest" style={robotoStyle}>Tallas</span>
               </div>
               <div className="flex flex-wrap gap-2">
                 {tallas.map((talla: string) => (
                   <button 
                     key={talla} 
                     onClick={() => toggleSize(talla)} 
-                    className={`w-12 h-12 rounded-xl border-2 font-black text-xs transition-all flex items-center justify-center ${
-                      selectedSizes.includes(talla) ? 'border-[#d4af37] bg-[#d4af37] text-white' : 'border-zinc-100 text-zinc-600'
+                    className={`w-12 h-12 rounded-xl border-2 font-black text-[10px] transition-all flex items-center justify-center ${
+                      selectedSizes.includes(talla) ? 'border-[#d4af37] bg-[#d4af37] text-white shadow-lg' : 'border-zinc-100 bg-zinc-50 text-zinc-600'
                     }`}
+                    style={robotoStyle}
                   >
                     {talla}
                   </button>
@@ -128,16 +152,16 @@ export default function ProductDetailsModal({ product, isOpen, onClose }: any) {
             </div>
           )}
 
-          <div className="fixed md:relative bottom-0 left-0 right-0 p-6 md:p-0 bg-white md:bg-transparent border-t md:border-none border-zinc-100 z-[60]">
-            <button 
-              disabled={!tieneStock || (mostrarVariantes && tallas.length > 0 && selectedSizes.length === 0)}
-              onClick={handleAdd}
-              className="w-full bg-[#1e3a5f] text-white py-5 rounded-2xl font-black uppercase tracking-widest flex items-center justify-center gap-3 active:scale-95 disabled:bg-zinc-200 disabled:text-zinc-400 transition-all shadow-xl"
-            >
-              <ShoppingBag size={20} /> 
-              {!tieneStock ? 'Agotado' : 'Añadir al Carrito'}
-            </button>
-          </div>
+          {/* Botón Final */}
+          <button 
+            disabled={!tieneStock || (mostrarVariantes && tallas.length > 0 && selectedSizes.length === 0)}
+            onClick={handleAdd}
+            className="w-full bg-[#1e3a5f] text-white py-5 rounded-[1.5rem] font-black uppercase text-[11px] tracking-widest flex items-center justify-center gap-3 active:scale-95 disabled:bg-zinc-100 disabled:text-zinc-300 transition-all shadow-xl"
+            style={robotoStyle}
+          >
+            <ShoppingBag size={18} /> 
+            {!tieneStock ? 'PRODUCTO AGOTADO' : 'Añadir al Carrito'}
+          </button>
         </div>
       </div>
     </div>
