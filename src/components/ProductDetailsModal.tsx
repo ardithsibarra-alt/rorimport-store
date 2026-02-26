@@ -1,10 +1,13 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { db } from '../lib/firebase';
+import { collection, onSnapshot, query } from 'firebase/firestore';
 import { X, ShoppingBag, Ruler, Palette, Check, Box } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 
-export default function ProductDetailsModal({ product, isOpen, onClose }: any) {
+const robotoStyle = { fontFamily: "'Roboto Condensed', sans-serif" };
+
+function ProductDetailsModal({ product, isOpen, onClose }: any) {
   const { addToCart } = useCart();
-  
   const [selectedColors, setSelectedColors] = useState<string[]>([]);
   const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
 
@@ -60,7 +63,7 @@ export default function ProductDetailsModal({ product, isOpen, onClose }: any) {
     <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={onClose}></div>
       
-      <div className="relative bg-white w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-[2.5rem] shadow-2xl flex flex-col md:flex-row animate-in zoom-in duration-300">
+      <div className="relative bg-white w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-[2.5rem] shadow-2xl flex flex-col md:flex-row animate-in zoom-in duration-300 scrollbar-hide">
         
         <button 
           onClick={onClose} 
@@ -73,7 +76,7 @@ export default function ProductDetailsModal({ product, isOpen, onClose }: any) {
           <img 
             src={product.imagen || product.image} 
             alt={product.nombre} 
-            className={`w-full h-auto object-contain drop-shadow-2xl transition-all duration-500 ${!tieneStock ? 'grayscale opacity-70' : ''}`} 
+            className={`w-full h-auto object-contain drop-shadow-2xl transition-all duration-500 transform-none rotate-0 ${!tieneStock ? 'grayscale opacity-70' : ''}`} 
           />
         </div>
 
@@ -88,14 +91,14 @@ export default function ProductDetailsModal({ product, isOpen, onClose }: any) {
           </div>
 
           <h2 className="text-3xl font-black text-[#1e3a5f] uppercase mb-4 leading-tight">{product.nombre}</h2>
-          <p className="text-4xl font-black text-[#1e3a5f] mb-8">${product.precio}</p>
+          <p className="text-4xl font-black text-[#1e3a5f] mb-8" style={robotoStyle}>${product.precio}</p>
 
-          <div className="space-y-8">
+          <div className="space-y-8 flex-grow">
             {mostrarVariantes && colores.length > 0 && (
               <div>
-                <div className="flex items-center gap-2 mb-3">
-                  <Palette size={14} className="text-gray-400" />
-                  <span className="text-[10px] font-black uppercase text-gray-400 tracking-widest">Colores</span>
+                <div className="flex items-center gap-2 mb-3 text-gray-400">
+                  <Palette size={14} />
+                  <span className="text-[10px] font-black uppercase tracking-widest">Colores</span>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {colores.map((color: string) => {
@@ -120,9 +123,9 @@ export default function ProductDetailsModal({ product, isOpen, onClose }: any) {
 
             {mostrarVariantes && tallas.length > 0 && (
               <div className="mb-8">
-                <div className="flex items-center gap-2 mb-3">
-                  <Ruler size={14} className="text-gray-400" />
-                  <span className="text-[10px] font-black uppercase text-gray-400 tracking-widest">Tallas</span>
+                <div className="flex items-center gap-2 mb-3 text-gray-400">
+                  <Ruler size={14} />
+                  <span className="text-[10px] font-black uppercase tracking-widest">Tallas</span>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {tallas.map((talla: string) => {
@@ -154,7 +157,7 @@ export default function ProductDetailsModal({ product, isOpen, onClose }: any) {
             <button 
               disabled={!tieneStock || (mostrarVariantes && tallas.length > 0 && selectedSizes.length === 0)}
               onClick={handleAdd}
-              className="w-full bg-[#1e3a5f] text-white py-6 rounded-2xl font-black uppercase tracking-[0.2em] flex items-center justify-center gap-3 active:scale-95 disabled:bg-gray-100 disabled:text-gray-300 transition-all shadow-xl"
+              className="w-full bg-[#1e3a5f] text-white py-6 rounded-2xl font-black uppercase text-xs tracking-[0.2em] flex items-center justify-center gap-3 active:scale-95 disabled:bg-gray-100 disabled:text-gray-300 transition-all shadow-xl"
             >
               <ShoppingBag size={20} /> 
               {!tieneStock 
@@ -167,5 +170,65 @@ export default function ProductDetailsModal({ product, isOpen, onClose }: any) {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function ProductGallery() {
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedProduct, setSelectedProduct] = useState<any>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  useEffect(() => {
+    const q = query(collection(db, "productos"));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const allProds = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      
+      const filtered = allProds.filter((p: any) => 
+        p.status === 'active' || p.status === undefined || p.status === ''
+      );
+      
+      setProducts(filtered as any);
+      setLoading(false);
+    }, (error) => {
+      console.error("Error en Firebase:", error);
+      setLoading(false);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  if (loading) return <div className="py-20 text-center font-black tracking-widest text-zinc-300">CARGANDO PRODUCTOS...</div>;
+
+  return (
+    <section id="productos" className="py-20 bg-white min-h-[500px]">
+      <div className="container mx-auto px-6">
+        {products.length === 0 ? (
+          <div className="text-center py-20 font-black text-zinc-400">NO SE ENCONTRARON PRODUCTOS DISPONIBLES</div>
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12">
+            {products.map((p: any) => (
+              <div key={p.id} onClick={() => { setSelectedProduct(p); setIsModalOpen(true); }} className="cursor-pointer group">
+                <div className="relative aspect-[3/4] overflow-hidden bg-[#F9F9F9] rounded-[2rem] mb-6 shadow-sm group-hover:shadow-xl transition-all duration-500">
+                  <img 
+                    src={p.imagen || p.image} 
+                    alt={p.nombre} 
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
+                  />
+                  {Number(p.stock) <= 0 && (
+                    <div className="absolute inset-0 bg-white/60 backdrop-blur-[2px] flex items-center justify-center">
+                      <span className="bg-black text-white text-[8px] font-black px-3 py-1 rounded-full tracking-widest uppercase">Agotado</span>
+                    </div>
+                  )}
+                </div>
+                <p className="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-1">{p.categoria}</p>
+                <h3 className="font-serif italic text-base uppercase text-black mb-1 leading-none">{p.nombre}</h3>
+                <p className="font-black text-sm text-black" style={robotoStyle}>${p.precio}</p>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+      <ProductDetailsModal product={selectedProduct} isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+    </section>
   );
 }
