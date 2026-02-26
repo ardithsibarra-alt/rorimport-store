@@ -217,7 +217,6 @@ export default function AdminDashboard() {
         </div>
       </header>
 
-      {/* El resto del código del dashboard se mantiene igual... */}
       <main className="max-w-6xl mx-auto p-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
           <div className="bg-black text-white p-6 rounded-3xl">
