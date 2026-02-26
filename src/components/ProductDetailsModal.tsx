@@ -60,78 +60,78 @@ function ProductDetailsModal({ product, isOpen, onClose }: any) {
   };
 
   return (
-    <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose}></div>
+    <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-md" onClick={onClose}></div>
       
-      <div className="relative bg-white w-full md:min-w-[950px] md:max-w-[1000px] md:h-[600px] rounded-[2rem] shadow-2xl flex flex-col md:flex-row overflow-hidden animate-in zoom-in duration-300">
-        
+      <div 
+        className="relative bg-white w-full rounded-[2.5rem] shadow-2xl flex flex-col md:flex-row overflow-hidden animate-in zoom-in duration-300"
+        style={{ 
+          maxWidth: window.innerWidth > 768 ? '1000px' : '100%',
+          height: window.innerWidth > 768 ? '600px' : 'auto',
+          maxHeight: '90vh'
+        }}
+      >
         <button 
           onClick={onClose} 
-          className="absolute top-6 right-6 z-50 p-2 bg-gray-100 hover:bg-black hover:text-white rounded-full transition-all"
+          className="absolute top-6 right-6 z-50 p-3 bg-white/80 hover:bg-black hover:text-white rounded-full transition-all shadow-lg"
         >
-          <X size={20} />
+          <X size={24} />
         </button>
         
-        <div className="w-full md:w-1/2 bg-[#f3f4f6] flex items-center justify-center p-12 h-72 md:h-full">
+        <div className="w-full md:w-1/2 bg-[#f0f2f5] flex items-center justify-center p-12 h-80 md:h-full shrink-0">
           <img 
             src={product.imagen || product.image} 
             alt={product.nombre} 
-            className="w-full h-full object-contain drop-shadow-2xl transform scale-110" 
+            className="w-full h-full object-contain drop-shadow-2xl transform scale-105" 
           />
         </div>
 
-        <div className="w-full md:w-1/2 p-10 md:p-16 flex flex-col justify-center bg-white">
+        <div className="w-full md:w-1/2 p-10 md:p-16 flex flex-col justify-center bg-white overflow-y-auto">
           <div className="mb-6">
-            <span className="text-[11px] font-bold text-gray-400 uppercase tracking-[0.3em]">{product.categoria}</span>
-            <h2 className="text-4xl font-black text-black mt-2 leading-tight uppercase">{product.nombre}</h2>
+            <span className="text-[11px] font-black text-gray-400 uppercase tracking-[0.4em]">{product.categoria}</span>
+            <h2 className="text-4xl font-black text-black mt-2 leading-none uppercase tracking-tighter">{product.nombre}</h2>
           </div>
 
-          <p className="text-5xl font-black text-black mb-10" style={robotoStyle}>${product.precio}</p>
+          <div className="flex items-baseline gap-4 mb-10">
+            <p className="text-5xl font-black text-black" style={robotoStyle}>${product.precio}</p>
+          </div>
 
-          <div className="space-y-8 mb-10">
+          <div className="space-y-10 mb-12">
             {mostrarVariantes && tallas.length > 0 && (
               <div>
-                <span className="text-[11px] font-bold text-black uppercase tracking-widest block mb-4">Tallas Disponibles</span>
-                <div className="flex flex-wrap gap-3">
-                  {tallas.map((talla: string) => {
-                    const isSelected = selectedSizes.includes(talla);
-                    return (
-                      <button 
-                        key={talla} 
-                        disabled={!tieneStock}
-                        onClick={() => toggleSize(talla)} 
-                        className={`w-14 h-14 border-2 font-bold text-sm transition-all flex items-center justify-center ${
-                          isSelected ? 'border-black bg-black text-white shadow-md' : 'border-gray-100 text-gray-500 hover:border-gray-300'
-                        }`}
-                      >
-                        {talla}
-                      </button>
-                    );
-                  })}
+                <span className="text-[10px] font-black text-black uppercase tracking-widest block mb-4">Tallas</span>
+                <div className="flex flex-wrap gap-2">
+                  {tallas.map((talla: string) => (
+                    <button 
+                      key={talla} 
+                      onClick={() => toggleSize(talla)} 
+                      className={`w-14 h-14 border-2 font-black text-xs transition-all flex items-center justify-center ${
+                        selectedSizes.includes(talla) ? 'border-black bg-black text-white' : 'border-gray-100 text-gray-400 hover:border-gray-300'
+                      }`}
+                    >
+                      {talla}
+                    </button>
+                  ))}
                 </div>
               </div>
             )}
 
             {mostrarVariantes && colores.length > 0 && (
               <div>
-                <span className="text-[11px] font-bold text-black uppercase tracking-widest block mb-4">Colores</span>
-                <div className="flex flex-wrap gap-3">
-                  {colores.map((color: string) => {
-                    const isSelected = selectedColors.includes(color);
-                    return (
-                      <button 
-                        key={color} 
-                        disabled={!tieneStock}
-                        onClick={() => toggleColor(color)} 
-                        className={`px-6 py-2 border-2 rounded-full text-[10px] font-bold uppercase transition-all flex items-center gap-2 ${
-                          isSelected ? 'border-black bg-black text-white' : 'border-gray-100 text-gray-400 hover:border-gray-300'
-                        }`}
-                      >
-                        {isSelected && <Check size={12} />}
-                        {color}
-                      </button>
-                    );
-                  })}
+                <span className="text-[10px] font-black text-black uppercase tracking-widest block mb-4">Colores</span>
+                <div className="flex flex-wrap gap-2">
+                  {colores.map((color: string) => (
+                    <button 
+                      key={color} 
+                      onClick={() => toggleColor(color)} 
+                      className={`px-6 py-2 border-2 rounded-full text-[10px] font-black uppercase transition-all flex items-center gap-2 ${
+                        selectedColors.includes(color) ? 'border-black bg-black text-white' : 'border-gray-100 text-gray-400 hover:border-gray-200'
+                      }`}
+                    >
+                      {selectedColors.includes(color) && <Check size={12} />}
+                      {color}
+                    </button>
+                  ))}
                 </div>
               </div>
             )}
@@ -140,10 +140,10 @@ function ProductDetailsModal({ product, isOpen, onClose }: any) {
           <button 
             disabled={!tieneStock}
             onClick={handleAdd}
-            className="w-full bg-black text-white py-6 rounded-xl font-bold uppercase text-xs tracking-[0.3em] flex items-center justify-center gap-4 hover:bg-zinc-800 transition-all shadow-xl disabled:bg-gray-100 disabled:text-gray-300"
+            className="w-full bg-black text-white py-6 rounded-2xl font-black uppercase text-xs tracking-[0.3em] flex items-center justify-center gap-4 hover:bg-zinc-800 transition-all shadow-xl disabled:bg-gray-100 disabled:text-gray-300"
           >
             <ShoppingBag size={20} /> 
-            {tieneStock ? 'Añadir al Carrito' : 'Agotado'}
+            {tieneStock ? 'Añadir al Carrito' : 'Sin Stock'}
           </button>
         </div>
       </div>
@@ -178,7 +178,7 @@ export default function ProductGallery() {
   return (
     <section id="productos" className="py-20 bg-white">
       <div className="container mx-auto px-6">
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12">
           {products.map((p: any) => (
             <div key={p.id} onClick={() => { setSelectedProduct(p); setIsModalOpen(true); }} className="cursor-pointer group">
               <div className="relative aspect-[3/4] overflow-hidden bg-[#F9F9F9] rounded-[2rem] mb-6 shadow-sm group-hover:shadow-xl transition-all duration-500">
@@ -187,11 +187,6 @@ export default function ProductGallery() {
                   alt={p.nombre} 
                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
                 />
-                {Number(p.stock) <= 0 && (
-                  <div className="absolute inset-0 bg-white/60 backdrop-blur-[2px] flex items-center justify-center">
-                    <span className="bg-black text-white text-[8px] font-black px-3 py-1 rounded-full tracking-widest uppercase">Agotado</span>
-                  </div>
-                )}
               </div>
               <p className="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-1">{p.categoria}</p>
               <h3 className="font-serif italic text-base uppercase text-black mb-1 leading-none">{p.nombre}</h3>
