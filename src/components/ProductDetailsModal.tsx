@@ -59,111 +59,111 @@ export default function ProductDetailsModal({ product, isOpen, onClose }: any) {
 
   return (
     <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/90 backdrop-blur-md" onClick={onClose}></div>
+      {/* Overlay oscuro con blur */}
+      <div className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={onClose}></div>
       
-      {/* Contenedor optimizado para PC: Ancho fijo de 420px para evitar deformación */}
-      <div className="relative bg-white w-full max-w-[420px] max-h-[92vh] overflow-y-auto rounded-[2.5rem] shadow-2xl animate-in zoom-in duration-300 scrollbar-hide flex flex-col">
+      {/* Contenedor Principal Estilo PC (Horizontal como tus capturas) */}
+      <div className="relative bg-white w-full max-w-4xl h-auto max-h-[90vh] overflow-hidden rounded-[2.5rem] shadow-2xl flex animate-in zoom-in duration-300">
         
-        {/* Botón Cerrar: Posicionado fuera del área de contenido crítico */}
+        {/* BOTÓN CERRAR: Con margen suficiente para no tapar el stock */}
         <button 
           onClick={onClose} 
-          className="absolute top-6 right-6 z-50 p-2 bg-white/60 hover:bg-white backdrop-blur-md rounded-full border border-zinc-100 shadow-sm transition-all"
+          className="absolute top-6 right-6 z-50 p-2 bg-zinc-100 hover:bg-zinc-200 rounded-full transition-all active:scale-90 shadow-sm"
         >
           <X size={20} className="text-black" />
         </button>
         
-        {/* IMAGEN: Sin rotaciones, centrada y ajustada al ancho de la ficha */}
-        <div className="w-full aspect-[4/5] bg-[#fdfdfd] flex items-center justify-center p-12 relative border-b border-zinc-50">
+        {/* COLUMNA IZQUIERDA: IMAGEN (Totalmente recta) */}
+        <div className="w-1/2 bg-[#f8f9fa] flex items-center justify-center p-12">
           <img 
             src={product.imagen || product.image} 
             alt={product.nombre} 
-            className={`w-full h-full object-contain ${!tieneStock ? 'grayscale opacity-40' : ''}`} 
+            className={`w-full h-full object-contain transform-none ${!tieneStock ? 'grayscale opacity-50' : ''}`} 
+            /* transform-none asegura que no herede rotaciones previas */
           />
-          
-          <div className="absolute bottom-6 left-8">
-             <span className="bg-zinc-900 text-white text-[9px] font-black px-4 py-1.5 rounded-full uppercase tracking-[0.2em]" style={robotoStyle}>
-                {product.categoria}
-             </span>
-          </div>
         </div>
 
-        {/* DETALLES: Alineación vertical perfecta bajo la imagen */}
-        <div className="p-10 space-y-8">
+        {/* COLUMNA DERECHA: INFORMACIÓN */}
+        <div className="w-1/2 p-12 flex flex-col overflow-y-auto scrollbar-hide">
           
-          <div className="space-y-4">
-            <div className="flex flex-col gap-2">
-              <h2 className="text-3xl font-black text-[#1e3a5f] uppercase leading-none tracking-tighter" style={robotoStyle}>
-                {product.nombre}
-              </h2>
-              {/* Stock visualmente despejado de la X */}
-              <div className="flex items-center">
-                <span className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase ${tieneStock ? 'bg-green-50 text-green-600 border border-green-100' : 'bg-red-50 text-red-600 border border-red-100'}`}>
-                  <Box size={12} />
-                  {tieneStock ? `DISPONIBLE: ${product.stock} UDS` : 'AGOTADO'}
-                </span>
-              </div>
+          {/* Header con Categoría y Stock */}
+          <div className="flex justify-between items-center mb-4 pr-12"> 
+            {/* El pr-12 evita que el stock choque visualmente con la posición de la X */}
+            <span className="text-[10px] font-black text-orange-400 uppercase tracking-[0.3em]" style={robotoStyle}>
+              {product.categoria}
+            </span>
+            <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[9px] font-black uppercase border ${tieneStock ? 'bg-green-50 text-green-600 border-green-100' : 'bg-red-50 text-red-600 border-red-100'}`}>
+              <Box size={10} />
+              {tieneStock ? `STOCK: ${product.stock}` : 'AGOTADO'}
             </div>
-            <p className="text-4xl font-black text-[#1e3a5f]" style={robotoStyle}>${product.precio}</p>
           </div>
 
-          {/* Variantes de Color */}
-          {mostrarVariantes && colores.length > 0 && (
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 text-zinc-400">
-                <Palette size={14} />
-                <span className="text-[10px] font-black uppercase tracking-widest" style={robotoStyle}>Colores</span>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {colores.map((color: string) => (
-                  <button 
-                    key={color} 
-                    onClick={() => toggleColor(color)} 
-                    className={`px-5 py-2.5 rounded-xl border-2 text-[10px] font-black uppercase transition-all ${
-                      selectedColors.includes(color) ? 'border-[#1e3a5f] bg-[#1e3a5f] text-white shadow-lg scale-105' : 'border-zinc-100 bg-zinc-50 text-zinc-400 hover:border-zinc-200'
-                    }`}
-                    style={robotoStyle}
-                  >
-                    {color}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
+          <h2 className="text-4xl font-black text-black uppercase leading-tight italic mb-2" style={robotoStyle}>
+            {product.nombre}
+          </h2>
+          <p className="text-4xl font-black text-black mb-8" style={robotoStyle}>${product.precio}</p>
 
-          {/* Variantes de Talla */}
-          {mostrarVariantes && tallas.length > 0 && (
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 text-zinc-400">
-                <Ruler size={14} />
-                <span className="text-[10px] font-black uppercase tracking-widest" style={robotoStyle}>Tallas</span>
+          <div className="space-y-8">
+            {/* Selección de Colores */}
+            {mostrarVariantes && colores.length > 0 && (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 text-zinc-400">
+                  <Palette size={14} />
+                  <span className="text-[10px] font-black uppercase tracking-widest">Colores</span>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {colores.map((color: string) => (
+                    <button 
+                      key={color} 
+                      onClick={() => toggleColor(color)} 
+                      className={`px-5 py-2.5 rounded-xl border-2 text-[10px] font-black uppercase transition-all ${
+                        selectedColors.includes(color) ? 'border-black bg-black text-white' : 'border-zinc-100 text-zinc-400 hover:border-zinc-200'
+                      }`}
+                      style={robotoStyle}
+                    >
+                      {color}
+                    </button>
+                  ))}
+                </div>
               </div>
-              <div className="flex flex-wrap gap-3">
-                {tallas.map((talla: string) => (
-                  <button 
-                    key={talla} 
-                    onClick={() => toggleSize(talla)} 
-                    className={`w-14 h-14 rounded-xl border-2 font-black text-[11px] transition-all flex items-center justify-center ${
-                      selectedSizes.includes(talla) ? 'border-[#d4af37] bg-[#d4af37] text-white shadow-xl scale-105' : 'border-zinc-100 bg-zinc-50 text-zinc-600 hover:border-zinc-200'
-                    }`}
-                    style={robotoStyle}
-                  >
-                    {talla}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
+            )}
 
-          {/* Botón Añadir */}
-          <button 
-            disabled={!tieneStock || (mostrarVariantes && tallas.length > 0 && selectedSizes.length === 0)}
-            onClick={handleAdd}
-            className="w-full bg-[#1e3a5f] text-white py-6 rounded-[1.8rem] font-black uppercase text-[12px] tracking-[0.25em] flex items-center justify-center gap-3 active:scale-95 disabled:bg-zinc-100 disabled:text-zinc-300 transition-all shadow-2xl mt-4"
-            style={robotoStyle}
-          >
-            <ShoppingBag size={20} /> 
-            {tieneStock ? 'Añadir al Carrito' : 'Sin Stock'}
-          </button>
+            {/* Selección de Tallas */}
+            {mostrarVariantes && tallas.length > 0 && (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 text-zinc-400">
+                  <Ruler size={14} />
+                  <span className="text-[10px] font-black uppercase tracking-widest">Tallas</span>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {tallas.map((talla: string) => (
+                    <button 
+                      key={talla} 
+                      onClick={() => toggleSize(talla)} 
+                      className={`w-14 h-14 rounded-xl border-2 font-black text-[11px] transition-all flex items-center justify-center ${
+                        selectedSizes.includes(talla) ? 'border-zinc-800 bg-zinc-800 text-white shadow-lg' : 'border-zinc-100 text-zinc-500 hover:border-zinc-200'
+                      }`}
+                    >
+                      {talla}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Botón Añadir (Abajo) */}
+          <div className="mt-auto pt-10">
+            <button 
+              disabled={!tieneStock || (mostrarVariantes && tallas.length > 0 && selectedSizes.length === 0)}
+              onClick={handleAdd}
+              className="w-full bg-zinc-100 hover:bg-black hover:text-white text-zinc-400 py-6 rounded-2xl font-black uppercase text-[11px] tracking-[0.2em] flex items-center justify-center gap-3 transition-all active:scale-95 disabled:opacity-50"
+              style={robotoStyle}
+            >
+              <ShoppingBag size={20} /> 
+              {tieneStock ? 'Añadir al Carrito' : 'Agotado'}
+            </button>
+          </div>
         </div>
       </div>
     </div>
