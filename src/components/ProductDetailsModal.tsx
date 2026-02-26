@@ -84,7 +84,6 @@ function ProductDetailsModal({ product, isOpen, onClose }: any) {
             )}
           </div>
 
-          {/* BOTÓN ÚNICO (SIN CORAZÓN AL LADO) */}
           <button 
             disabled={estaBloqueado}
             onClick={handleAdd}
