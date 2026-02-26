@@ -4,7 +4,7 @@ import { signInWithEmailAndPassword, onAuthStateChanged, signOut } from 'firebas
 import { collection, query, orderBy, onSnapshot, updateDoc, doc, deleteDoc, addDoc, serverTimestamp } from 'firebase/firestore';
 import { 
   Phone, MapPin, CheckCircle, Lock, Trash2, DollarSign, AlertTriangle, Save, 
-  Plus, X, Upload, Loader2, Edit2, Globe, Truck, Package, Tag, Clock, ChevronDown, LogOut
+  Plus, X, Upload, Loader2, Edit2, Globe, Truck, Package, Tag, Clock, ChevronDown, LogOut, Eye, EyeOff
 } from 'lucide-react';
 
 const robotoStyle = { fontFamily: "'Roboto Condensed', sans-serif" };
@@ -56,6 +56,7 @@ function EditableAmount({ orderId, currentAmount }) {
 export default function AdminDashboard() {
   const [orders, setOrders] = useState([]);
   const [products, setProducts] = useState([]);
+  const [filterStatus, setFilterStatus] = useState("TODOS");
   const [categories, setCategories] = useState(["ROPA", "CALZADO", "GYM", "HOGAR", "ACCESORIOS"]);
   const [user, setUser] = useState(null);
   const [email, setEmail] = useState('');
@@ -69,7 +70,7 @@ export default function AdminDashboard() {
   const [config, setConfig] = useState({ tasaDolar: 0, modoMantenimiento: false, bannerTexto: "" });
   const [newProduct, setNewProduct] = useState({ 
     nombre: '', precio: '', imagen: '', categoria: '', 
-    stock: '', descripcion: '', aplicaVariantes: false, tallas: [], colores: [] 
+    stock: '', descripcion: '', aplicaVariantes: false, tallas: [], colores: [], inhabilitado: false
   });
 
   useEffect(() => {
@@ -142,6 +143,23 @@ export default function AdminDashboard() {
     }
   };
 
+  const toggleInhabilitar = async (prod) => {
+    try {
+      await updateDoc(doc(db, "productos", prod.id), {
+        inhabilitado: !prod.inhabilitado
+      });
+    } catch (e) {
+      alert("Error al cambiar estado");
+    }
+  };
+
+  const filteredProducts = products.filter(prod => {
+    if (filterStatus === "ACTIVO") return prod.stock > 0 && !prod.inhabilitado;
+    if (filterStatus === "AGOTADO") return prod.stock <= 0;
+    if (filterStatus === "INHABILITADO") return prod.inhabilitado === true;
+    return true;
+  });
+
   const handleImageUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -175,7 +193,7 @@ export default function AdminDashboard() {
         fechaCreacion: serverTimestamp()
       });
       setIsModalOpen(false);
-      setNewProduct({ nombre: '', precio: '', imagen: '', categoria: '', stock: '', descripcion: '', aplicaVariantes: false, tallas: [], colores: [] });
+      setNewProduct({ nombre: '', precio: '', imagen: '', categoria: '', stock: '', descripcion: '', aplicaVariantes: false, tallas: [], colores: [], inhabilitado: false });
     } catch (error) {
       alert("Error al guardar");
     }
@@ -313,25 +331,68 @@ export default function AdminDashboard() {
 
         {activeTab === 'inventario' && (
           <div className="space-y-6">
-            <div className="flex justify-between items-center">
-              <h2 className="font-black italic text-xl uppercase" style={robotoStyle}>Stock & Products</h2>
-              <button onClick={() => setIsModalOpen(true)} className="bg-black text-white px-6 py-3 rounded-xl font-black text-[10px] uppercase flex items-center gap-2" style={robotoStyle}><Plus size={16}/> New Entry</button>
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="flex gap-2 bg-zinc-100 p-1 rounded-2xl w-fit">
+                {["TODOS", "ACTIVO", "AGOTADO", "INHABILITADO"].map(status => (
+                  <button 
+                    key={status}
+                    onClick={() => setFilterStatus(status)}
+                    className={`px-4 py-2 rounded-xl text-[9px] font-black transition-all ${filterStatus === status ? 'bg-black text-white shadow-md' : 'text-zinc-400 hover:text-black'}`}
+                    style={robotoStyle}
+                  >
+                    {status}
+                  </button>
+                ))}
+              </div>
+              <button onClick={() => setIsModalOpen(true)} className="bg-black text-white px-6 py-3 rounded-xl font-black text-[10px] uppercase flex items-center justify-center gap-2" style={robotoStyle}>
+                <Plus size={16}/> New Entry
+              </button>
             </div>
+
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {products.map(prod => (
-                <div key={prod.id} className="bg-white border rounded-3xl overflow-hidden group">
+              {filteredProducts.map(prod => (
+                <div key={prod.id} className={`bg-white border rounded-3xl overflow-hidden group transition-all ${prod.inhabilitado ? 'opacity-40 grayscale-[0.5]' : ''}`}>
                   <div className="h-40 bg-zinc-100 relative">
-                    <img src={prod.imagen} className="w-full h-full object-cover" />
-                    <button onClick={() => confirm("Eliminar?") && deleteDoc(doc(db, "productos", prod.id))} className="absolute top-2 right-2 p-2 bg-white/90 rounded-lg text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 size={14}/></button>
+                    <img src={prod.imagen} className="w-full h-full object-cover" alt={prod.nombre} />
+                    <div className="absolute top-2 right-2 flex gap-1">
+                      <button 
+                        onClick={() => toggleInhabilitar(prod)} 
+                        className="p-2 bg-white/90 rounded-lg text-zinc-600 hover:text-blue-500 transition-colors shadow-sm"
+                      >
+                        {prod.inhabilitado ? <Eye size={14}/> : <EyeOff size={14}/>}
+                      </button>
+                      <button 
+                        onClick={() => confirm("Eliminar?") && deleteDoc(doc(db, "productos", prod.id))} 
+                        className="p-2 bg-white/90 rounded-lg text-red-500 opacity-0 group-hover:opacity-100 transition-opacity shadow-sm"
+                      >
+                        <Trash2 size={14}/>
+                      </button>
+                    </div>
+                    {prod.stock <= 0 && (
+                      <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                        <span className="text-white font-black italic text-[10px] uppercase tracking-tighter" style={robotoStyle}>Sin Existencias</span>
+                      </div>
+                    )}
                   </div>
                   <div className="p-4">
-                    <p className="text-[9px] font-black text-zinc-400 uppercase mb-1" style={robotoStyle}>{prod.categoria}</p>
+                    <div className="flex justify-between items-start mb-1">
+                      <p className="text-[9px] font-black text-zinc-400 uppercase" style={robotoStyle}>{prod.categoria}</p>
+                      <span className={`text-[7px] font-black px-1.5 py-0.5 rounded ${prod.inhabilitado ? 'bg-red-100 text-red-600' : (prod.stock > 0 ? 'bg-green-100 text-green-600' : 'bg-zinc-100 text-zinc-500')}`}>
+                        {prod.inhabilitado ? 'OFF' : (prod.stock > 0 ? 'ON' : 'OUT')}
+                      </span>
+                    </div>
                     <h5 className="font-black text-xs uppercase mb-3 truncate" style={robotoStyle}>{prod.nombre}</h5>
                     <div className="flex justify-between items-center">
                       <span className="font-black italic text-lg" style={robotoStyle}>${prod.precio}</span>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 bg-zinc-50 px-2 py-1 rounded-lg">
                         <span className="text-[9px] font-black opacity-40" style={robotoStyle}>STK:</span>
-                        <input type="number" defaultValue={prod.stock} onBlur={(e) => updateDoc(doc(db, "productos", prod.id), { stock: parseInt(e.target.value) })} className="w-10 text-right font-black text-xs focus:text-blue-600 outline-none" style={robotoStyle} />
+                        <input 
+                          type="number" 
+                          defaultValue={prod.stock} 
+                          onBlur={(e) => updateDoc(doc(db, "productos", prod.id), { stock: parseInt(e.target.value) })} 
+                          className="w-10 text-right font-black text-xs focus:text-blue-600 outline-none bg-transparent" 
+                          style={robotoStyle} 
+                        />
                       </div>
                     </div>
                   </div>
