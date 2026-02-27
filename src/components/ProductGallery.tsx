@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { db } from '../lib/firebase';
 import { collection, onSnapshot, query } from 'firebase/firestore';
-import { X, Box, ShoppingBag, Ruler, Palette, Check } from 'lucide-react';
+import { X, Box, ShoppingBag, Ruler, Palette, Check, Filter } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 
 const robotoStyle = { fontFamily: "'Roboto Condensed', sans-serif" };
@@ -156,10 +156,11 @@ function ModalVistaUnica({ product, isOpen, onClose }: any) {
 }
 
 export default function ProductGallery() {
-  const [products, setProducts] = useState([]);
+  const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [activeCategory, setActiveCategory] = useState('TODOS');
 
   useEffect(() => {
     const q = query(collection(db, "productos"));
@@ -168,7 +169,7 @@ export default function ProductGallery() {
       const activeProds = allProds.filter((p: any) => 
         (Number(p.stock) || 0) > 0 && p.inhabilitado !== true
       );
-      setProducts(activeProds as any);
+      setProducts(activeProds);
       setLoading(false);
     }, (error) => {
       setLoading(false);
@@ -176,29 +177,61 @@ export default function ProductGallery() {
     return () => unsubscribe();
   }, []);
 
-  if (loading) return <div className="py-20 text-center font-black tracking-[0.5em] text-zinc-300 animate-pulse">CARGANDO GALERÍA...</div>;
+  const categories = ['TODOS', ...new Set(products.map((p: any) => p.categoria).filter(Boolean))];
 
-  if (products.length === 0) return (
-    <div className="py-20 text-center font-black text-zinc-400 uppercase tracking-widest">
-      No hay productos disponibles actualmente.
-    </div>
-  );
+  const filteredProducts = activeCategory === 'TODOS' 
+    ? products 
+    : products.filter(p => p.categoria === activeCategory);
+
+  if (loading) return <div className="py-20 text-center font-black tracking-[0.5em] text-zinc-300 animate-pulse">CARGANDO...</div>;
 
   return (
-    <section id="productos" className="py-20 bg-white">
+    <section id="productos" className="py-24 bg-white">
       <div className="container mx-auto px-6">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12">
-          {products.map((p: any) => (
-            <div key={p.id} onClick={() => { setSelectedProduct(p); setIsModalOpen(true); }} className="cursor-pointer group">
-              <div className="relative aspect-[3/4] overflow-hidden bg-[#F9F9F9] rounded-[2rem] mb-6 shadow-sm group-hover:shadow-xl transition-all duration-500">
-                <img src={p.imagen || p.image} alt={p.nombre} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
-              </div>
-              <p className="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-1">{p.categoria}</p>
-              <h3 className="font-serif italic text-base uppercase text-black mb-1 leading-none">{p.nombre}</h3>
-              <p className="font-black text-sm text-black" style={robotoStyle}>${p.precio}</p>
-            </div>
-          ))}
+        
+        <div className="text-center mb-16">
+          <h2 className="text-5xl md:text-7xl font-serif italic text-black mb-6 uppercase tracking-tighter">Catálogo</h2>
+          
+          <div className="flex flex-wrap justify-center gap-3 md:gap-6 mt-8">
+            {categories.map((cat: any) => (
+              <button
+                key={cat}
+                onClick={() => setActiveCategory(cat)}
+                className={`px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-[0.2em] transition-all border-2 ${
+                  activeCategory === cat 
+                  ? 'bg-black text-white border-black shadow-lg scale-105' 
+                  : 'bg-white text-zinc-400 border-zinc-100 hover:border-black hover:text-black'
+                }`}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
         </div>
+
+        {filteredProducts.length === 0 ? (
+          <div className="py-20 text-center font-black text-zinc-400 uppercase tracking-widest">
+            No hay productos en esta categoría.
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
+            {filteredProducts.map((p: any) => (
+              <div key={p.id} onClick={() => { setSelectedProduct(p); setIsModalOpen(true); }} className="cursor-pointer group">
+                <div className="relative aspect-[3/4] overflow-hidden bg-[#F9F9F9] rounded-[2rem] mb-6 shadow-sm group-hover:shadow-xl transition-all duration-500">
+                  <img src={p.imagen || p.image} alt={p.nombre} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                  {p.stock < 5 && (
+                    <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-[8px] font-black text-black uppercase tracking-tighter">
+                      Últimas unidades
+                    </div>
+                  )}
+                </div>
+                <p className="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-1">{p.categoria}</p>
+                <h3 className="font-serif italic text-base uppercase text-black mb-1 leading-none">{p.nombre}</h3>
+                <p className="font-black text-sm text-black" style={robotoStyle}>${p.precio}</p>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
       
       <ModalVistaUnica 
