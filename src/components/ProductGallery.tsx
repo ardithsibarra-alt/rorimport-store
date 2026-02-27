@@ -6,7 +6,6 @@ import { useCart } from '../context/CartContext';
 
 const robotoStyle = { fontFamily: "'Roboto Condensed', sans-serif" };
 
-// He cambiado el nombre a "ModalVistaUnica" para que no choque con archivos viejos
 function ModalVistaUnica({ product, isOpen, onClose }: any) {
   const { addToCart } = useCart();
   const [selectedSize, setSelectedSize] = useState<string>("");
@@ -50,7 +49,6 @@ function ModalVistaUnica({ product, isOpen, onClose }: any) {
   return (
     <div className="fixed inset-0 z-[10000] flex items-center justify-center p-0 md:p-4 bg-black/95 backdrop-blur-md">
       <style>{`
-        /* Bloque de corrección de Scroll */
         .no-scrollbar::-webkit-scrollbar { display: none !important; }
         .no-scrollbar { 
           -ms-overflow-style: none !important; 
@@ -60,7 +58,6 @@ function ModalVistaUnica({ product, isOpen, onClose }: any) {
       `}</style>
 
       <div className="relative bg-white w-full max-w-[1100px] h-full md:h-auto md:max-h-[90vh] md:rounded-[3rem] shadow-2xl flex flex-col md:flex-row overflow-hidden animate-in zoom-in duration-300">
-        
         <button onClick={onClose} className="absolute top-4 right-4 md:top-8 md:right-8 z-[110] p-3 bg-white/90 hover:bg-black hover:text-white rounded-full shadow-lg transition-all">
           <X size={20}/>
         </button>
@@ -138,16 +135,23 @@ export default function ProductGallery() {
     const q = query(collection(db, "productos"), where("status", "==", "active"));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const activeProds = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      console.log("Productos cargados:", activeProds.length); // Ver en consola
       setProducts(activeProds as any);
       setLoading(false);
     }, (error) => {
-      console.error(error);
+      console.error("Error en Firebase:", error);
       setLoading(false);
     });
     return () => unsubscribe();
   }, []);
 
-  if (loading) return <div className="py-20 text-center font-black tracking-[0.5em] text-zinc-300">CARGANDO...</div>;
+  if (loading) return <div className="py-20 text-center font-black tracking-[0.5em] text-zinc-300 animate-pulse">CARGANDO GALERÍA...</div>;
+
+  if (products.length === 0) return (
+    <div className="py-20 text-center font-black text-zinc-400 uppercase tracking-widest">
+      No hay productos activos para mostrar.
+    </div>
+  );
 
   return (
     <section id="productos" className="py-20 bg-white">
@@ -166,7 +170,6 @@ export default function ProductGallery() {
         </div>
       </div>
       
-      {/* Llamada al nuevo nombre del componente */}
       <ModalVistaUnica 
         product={selectedProduct} 
         isOpen={isModalOpen} 
