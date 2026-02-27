@@ -1,15 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { db } from '../lib/firebase';
 import { collection, onSnapshot, query } from 'firebase/firestore';
-import { X, Box, ShoppingBag, Ruler, Palette } from 'lucide-react';
+import { X, Box, ShoppingBag, Ruler, Palette, Check } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 
 const robotoStyle = { fontFamily: "'Roboto Condensed', sans-serif" };
 
 function ModalVistaUnica({ product, isOpen, onClose }: any) {
   const { addToCart } = useCart();
-  const [selectedSize, setSelectedSize] = useState<string>("");
-  const [selectedColor, setSelectedColor] = useState<string>("");
+  const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
+  const [selectedColors, setSelectedColors] = useState<string[]>([]);
 
   if (!isOpen || !product) return null;
 
@@ -18,10 +18,18 @@ function ModalVistaUnica({ product, isOpen, onClose }: any) {
   const colores = (mostrarVariantes && Array.isArray(product.colores)) ? product.colores : [];
   const tieneStock = Number(product.stock) > 0;
 
+  const toggleSize = (size: string) => {
+    setSelectedSizes(prev => prev.includes(size) ? prev.filter(s => s !== size) : [...prev, size]);
+  };
+
+  const toggleColor = (color: string) => {
+    setSelectedColors(prev => prev.includes(color) ? prev.filter(c => c !== color) : [...prev, color]);
+  };
+
   const seleccionIncompleta = () => {
     if (!mostrarVariantes) return false;
-    const faltaTalla = tallas.length > 0 && !selectedSize;
-    const faltaColor = colores.length > 0 && !selectedColor;
+    const faltaTalla = tallas.length > 0 && selectedSizes.length === 0;
+    const faltaColor = colores.length > 0 && selectedColors.length === 0;
     return faltaTalla || faltaColor;
   };
 
@@ -29,20 +37,28 @@ function ModalVistaUnica({ product, isOpen, onClose }: any) {
 
   const handleAdd = () => {
     if (estaBloqueado) return;
-    const variantName = `${product.nombre} ${selectedColor ? `(${selectedColor})` : ''} ${selectedSize ? `- ${selectedSize}` : ''}`;
-    
-    addToCart({
-      id: `${product.id}-${selectedColor}-${selectedSize}`,
-      name: variantName,
-      price: product.precio,
-      image: product.imagen || product.image,
-      quantity: 1,
-      selectedSize: selectedSize || 'N/A',
-      selectedColor: selectedColor || 'N/A'
+
+    const finalColors = colores.length > 0 ? selectedColors : ["N/A"];
+    const finalSizes = tallas.length > 0 ? selectedSizes : ["N/A"];
+
+    finalColors.forEach(color => {
+      finalSizes.forEach(size => {
+        const variantName = `${product.nombre}${color !== 'N/A' ? ` (${color})` : ''}${size !== 'N/A' ? ` - ${size}` : ''}`;
+        
+        addToCart({
+          id: `${product.id}-${color}-${size}`,
+          name: variantName,
+          price: product.precio,
+          image: product.imagen || product.image,
+          quantity: 1,
+          selectedSize: size,
+          selectedColor: color
+        });
+      });
     });
-    
-    setSelectedColor("");
-    setSelectedSize("");
+
+    setSelectedColors([]);
+    setSelectedSizes([]);
     onClose();
   };
 
@@ -55,7 +71,7 @@ function ModalVistaUnica({ product, isOpen, onClose }: any) {
           scrollbar-width: none !important; 
           overflow-y: auto !important;
         }
-      `}</style>
+      `}`}</style>
 
       <div className="relative bg-white w-full max-w-[1100px] h-full md:h-auto md:max-h-[90vh] md:rounded-[3rem] shadow-2xl flex flex-col md:flex-row overflow-hidden animate-in zoom-in duration-300">
         <button onClick={onClose} className="absolute top-4 right-4 md:top-8 md:right-8 z-[110] p-3 bg-white/90 hover:bg-black hover:text-white rounded-full shadow-lg transition-all">
@@ -77,11 +93,18 @@ function ModalVistaUnica({ product, isOpen, onClose }: any) {
             {colores.length > 0 && (
               <div className="space-y-3">
                 <div className="flex items-center gap-2 text-black font-black uppercase text-[10px] tracking-widest">
-                  <Palette size={14} /> COLORES
+                  <Palette size={14} /> COLORES SELECCIONADOS ({selectedColors.length})
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {colores.map(c => (
-                    <button key={c} onClick={() => setSelectedColor(c)} className={`px-4 py-2 rounded-xl border-2 text-[10px] font-black uppercase transition-all ${selectedColor === c ? 'bg-black text-white border-black' : 'border-zinc-100 text-zinc-400'}`}>{c}</button>
+                    <button 
+                      key={c} 
+                      onClick={() => toggleColor(c)} 
+                      className={`px-4 py-2 rounded-xl border-2 text-[10px] font-black uppercase transition-all flex items-center gap-2 ${selectedColors.includes(c) ? 'bg-black text-white border-black' : 'border-zinc-100 text-zinc-400'}`}
+                    >
+                      {selectedColors.includes(c) && <Check size={10} />}
+                      {c}
+                    </button>
                   ))}
                 </div>
               </div>
@@ -90,11 +113,18 @@ function ModalVistaUnica({ product, isOpen, onClose }: any) {
             {tallas.length > 0 && (
               <div className="space-y-3">
                 <div className="flex items-center gap-2 text-black font-black uppercase text-[10px] tracking-widest">
-                  <Ruler size={14} /> TALLAS
+                  <Ruler size={14} /> TALLAS SELECCIONADAS ({selectedSizes.length})
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {tallas.map(t => (
-                    <button key={t} onClick={() => setSelectedSize(t)} className={`w-12 h-12 rounded-xl border-2 font-black text-xs transition-all flex items-center justify-center ${selectedSize === t ? 'bg-black text-white border-black' : 'border-zinc-100 text-zinc-500'}`}>{t}</button>
+                    <button 
+                      key={t} 
+                      onClick={() => toggleSize(t)} 
+                      className={`w-12 h-12 rounded-xl border-2 font-black text-xs transition-all flex items-center justify-center relative ${selectedSizes.includes(t) ? 'bg-black text-white border-black' : 'border-zinc-100 text-zinc-500'}`}
+                    >
+                      {selectedSizes.includes(t) && <Check size={8} className="absolute top-1 right-1" />}
+                      {t}
+                    </button>
                   ))}
                 </div>
               </div>
@@ -116,7 +146,7 @@ function ModalVistaUnica({ product, isOpen, onClose }: any) {
               }`}
             >
               <ShoppingBag size={20} />
-              {!tieneStock ? 'AGOTADO' : seleccionIncompleta() ? 'SELECCIONA OPCIONES' : 'AÑADIR AL CARRITO'}
+              {!tieneStock ? 'AGOTADO' : seleccionIncompleta() ? 'SELECCIONA OPCIONES' : `AÑADIR ${selectedSizes.length * (selectedColors.length || 1)} AL CARRITO`}
             </button>
           </div>
         </div>
