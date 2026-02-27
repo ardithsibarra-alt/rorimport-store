@@ -16,7 +16,7 @@ function ModalVistaUnica({ product, isOpen, onClose }: any) {
   const mostrarVariantes = product.aplicaVariantes !== false;
   const tallas = (mostrarVariantes && Array.isArray(product.tallas)) ? product.tallas : [];
   const colores = (mostrarVariantes && Array.isArray(product.colores)) ? product.colores : [];
-  const tieneStock = Number(product.stock) > 0;
+  const tieneStock = (Number(product.stock) || 0) > 0;
 
   const toggleSize = (size: string) => {
     setSelectedSizes(prev => prev.includes(size) ? prev.filter(s => s !== size) : [...prev, size]);
@@ -71,7 +71,7 @@ function ModalVistaUnica({ product, isOpen, onClose }: any) {
           scrollbar-width: none !important; 
           overflow-y: auto !important;
         }
-      `}`}</style>
+      `}</style>
 
       <div className="relative bg-white w-full max-w-[1100px] h-full md:h-auto md:max-h-[90vh] md:rounded-[3rem] shadow-2xl flex flex-col md:flex-row overflow-hidden animate-in zoom-in duration-300">
         <button onClick={onClose} className="absolute top-4 right-4 md:top-8 md:right-8 z-[110] p-3 bg-white/90 hover:bg-black hover:text-white rounded-full shadow-lg transition-all">
@@ -146,7 +146,7 @@ function ModalVistaUnica({ product, isOpen, onClose }: any) {
               }`}
             >
               <ShoppingBag size={20} />
-              {!tieneStock ? 'AGOTADO' : seleccionIncompleta() ? 'SELECCIONA OPCIONES' : `AÑADIR ${selectedSizes.length * (selectedColors.length || 1)} AL CARRITO`}
+              {!tieneStock ? 'AGOTADO' : seleccionIncompleta() ? 'SELECCIONA OPCIONES' : `AÑADIR ${selectedSizes.length > 0 && selectedColors.length > 0 ? selectedSizes.length * selectedColors.length : Math.max(selectedSizes.length, selectedColors.length, 1)} AL CARRITO`}
             </button>
           </div>
         </div>
@@ -166,12 +166,11 @@ export default function ProductGallery() {
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const allProds = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       const activeProds = allProds.filter((p: any) => 
-        Number(p.stock) > 0 && p.inhabilitado !== true
+        (Number(p.stock) || 0) > 0 && p.inhabilitado !== true
       );
       setProducts(activeProds as any);
       setLoading(false);
     }, (error) => {
-      console.error("Error:", error);
       setLoading(false);
     });
     return () => unsubscribe();
@@ -181,7 +180,7 @@ export default function ProductGallery() {
 
   if (products.length === 0) return (
     <div className="py-20 text-center font-black text-zinc-400 uppercase tracking-widest">
-      No hay productos activos para mostrar.
+      No hay productos disponibles actualmente.
     </div>
   );
 
