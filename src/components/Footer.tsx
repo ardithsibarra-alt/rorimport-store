@@ -1,7 +1,9 @@
-import { MapPin, Phone, Mail, Instagram, Facebook } from 'lucide-react';
+import React, { useState } from 'react';
+import { MapPin, Phone, Mail, Instagram, X } from 'lucide-react';
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
+  const [showPrivacy, setShowPrivacy] = useState(false);
 
   return (
     <footer id="contacto" className="bg-black text-white pt-20 pb-32 md:pb-10">
@@ -63,18 +65,13 @@ export default function Footer() {
             <h4 className="text-[10px] font-bold uppercase tracking-[0.4em] text-[#d4af37]">Presencia Digital</h4>
             <div className="flex gap-4">
               <a
-                href="#"
+                href="https://www.instagram.com/rorimport_sp/"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="w-11 h-11 rounded-full border border-gray-800 flex items-center justify-center hover:bg-white hover:text-black hover:border-white transition-all duration-500"
                 aria-label="Instagram"
               >
                 <Instagram size={18} />
-              </a>
-              <a
-                href="#"
-                className="w-11 h-11 rounded-full border border-gray-800 flex items-center justify-center hover:bg-white hover:text-black hover:border-white transition-all duration-500"
-                aria-label="Facebook"
-              >
-                <Facebook size={18} />
               </a>
             </div>
 
@@ -94,16 +91,63 @@ export default function Footer() {
               © {currentYear} RORIMPORT. Excelencia en Importación.
             </p>
             <div className="flex gap-8">
-              <a href="#" className="text-[9px] font-bold text-gray-600 hover:text-white uppercase tracking-widest transition-colors">
-                Términos
-              </a>
-              <a href="#" className="text-[9px] font-bold text-gray-600 hover:text-white uppercase tracking-widest transition-colors">
+              <button 
+                onClick={() => setShowPrivacy(true)}
+                className="text-[9px] font-bold text-gray-600 hover:text-white uppercase tracking-widest transition-colors"
+              >
                 Privacidad
-              </a>
+              </button>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Modal de Privacidad */}
+      {showPrivacy && (
+        <div className="fixed inset-0 z-[20000] flex items-center justify-center p-4 bg-black/95 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="bg-zinc-900 border border-zinc-800 w-full max-w-2xl max-h-[80vh] overflow-y-auto rounded-[2rem] p-8 md:p-12 relative shadow-2xl">
+            <button 
+              onClick={() => setShowPrivacy(false)}
+              className="absolute top-6 right-6 p-2 text-zinc-500 hover:text-white transition-colors"
+            >
+              <X size={24} />
+            </button>
+            
+            <h2 className="text-3xl font-serif italic text-white mb-8 uppercase tracking-tighter">Políticas de Privacidad</h2>
+            
+            <div className="space-y-6 text-zinc-400 text-xs md:text-sm leading-relaxed font-medium uppercase tracking-wider">
+              <section>
+                <h3 className="text-[#d4af37] text-[10px] font-black mb-2 tracking-[0.2em]">1. RECOPILACIÓN DE DATOS</h3>
+                <p>En RORIMPORT recopilamos únicamente la información necesaria para procesar su pedido: nombre, número de contacto y dirección de entrega a través de nuestra integración con WhatsApp.</p>
+              </section>
+
+              <section>
+                <h3 className="text-[#d4af37] text-[10px] font-black mb-2 tracking-[0.2em]">2. USO DE LA INFORMACIÓN</h3>
+                <p>Sus datos personales se utilizan exclusivamente para la gestión logística, confirmación de pedidos y entrega de productos. No compartimos ni vendemos su información a terceros con fines publicitarios.</p>
+              </section>
+
+              <section>
+                <h3 className="text-[#d4af37] text-[10px] font-black mb-2 tracking-[0.2em]">3. SEGURIDAD Y ALMACENAMIENTO</h3>
+                <p>Nuestra plataforma utiliza infraestructura de Firebase (Google Cloud) para garantizar la integridad y seguridad de la base de datos de productos y pedidos, manteniendo estándares de cifrado vigentes.</p>
+              </section>
+
+              <section>
+                <h3 className="text-[#d4af37] text-[10px] font-black mb-2 tracking-[0.2em]">4. CONTACTO</h3>
+                <p>Para solicitar la rectificación o eliminación de sus datos de nuestros registros de envío, puede contactarnos directamente a través de ventas@rorimport.com.</p>
+              </section>
+            </div>
+            
+            <div className="mt-10 pt-6 border-t border-zinc-800">
+              <button 
+                onClick={() => setShowPrivacy(false)}
+                className="w-full py-4 bg-white text-black font-black text-[10px] uppercase tracking-[0.3em] rounded-xl hover:bg-[#d4af37] transition-colors"
+              >
+                Entendido
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </footer>
   );
 }
