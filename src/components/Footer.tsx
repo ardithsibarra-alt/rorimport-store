@@ -3,7 +3,7 @@ import { MapPin, Phone, Mail, Instagram, X } from 'lucide-react';
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
-  const [showPrivacy, setShowPrivacy] = useState(false);
+  const [showLegal, setShowLegal] = useState(false);
 
   return (
     <footer id="contacto" className="bg-black text-white pt-20 pb-32 md:pb-10">
@@ -92,57 +92,57 @@ export default function Footer() {
             </p>
             <div className="flex gap-8">
               <button 
-                onClick={() => setShowPrivacy(true)}
+                onClick={() => setShowLegal(true)}
                 className="text-[9px] font-bold text-gray-600 hover:text-white uppercase tracking-widest transition-colors"
               >
-                Privacidad
+                Políticas y Privacidad
               </button>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Modal de Privacidad */}
-      {showPrivacy && (
+      {/* Modal Legal Unificado */}
+      {showLegal && (
         <div className="fixed inset-0 z-[20000] flex items-center justify-center p-4 bg-black/95 backdrop-blur-sm animate-in fade-in duration-300">
-          <div className="bg-zinc-900 border border-zinc-800 w-full max-w-2xl max-h-[80vh] overflow-y-auto rounded-[2rem] p-8 md:p-12 relative shadow-2xl">
+          <div className="bg-zinc-900 border border-zinc-800 w-full max-w-2xl max-h-[85vh] overflow-y-auto rounded-[2rem] p-8 md:p-12 relative shadow-2xl no-scrollbar">
             <button 
-              onClick={() => setShowPrivacy(false)}
+              onClick={() => setShowLegal(false)}
               className="absolute top-6 right-6 p-2 text-zinc-500 hover:text-white transition-colors"
             >
               <X size={24} />
             </button>
             
-            <h2 className="text-3xl font-serif italic text-white mb-8 uppercase tracking-tighter">Políticas de Privacidad</h2>
+            <h2 className="text-3xl font-serif italic text-white mb-8 uppercase tracking-tighter">Información Legal</h2>
             
-            <div className="space-y-6 text-zinc-400 text-xs md:text-sm leading-relaxed font-medium uppercase tracking-wider">
-              <section>
-                <h3 className="text-[#d4af37] text-[10px] font-black mb-2 tracking-[0.2em]">1. RECOPILACIÓN DE DATOS</h3>
-                <p>En RORIMPORT recopilamos únicamente la información necesaria para procesar su pedido: nombre, número de contacto y dirección de entrega a través de nuestra integración con WhatsApp.</p>
+            <div className="space-y-8 text-zinc-400 text-[10px] md:text-xs leading-relaxed font-medium uppercase tracking-wider">
+              
+              <section className="space-y-4">
+                <h3 className="text-[#d4af37] font-black tracking-[0.2em] border-b border-zinc-800 pb-2">TÉRMINOS DE SERVICIO</h3>
+                <div className="space-y-3">
+                  <p><span className="text-white">PROCESO DE COMPRA:</span> Las órdenes se inician en este portal y se finalizan exclusivamente vía WhatsApp para garantizar una atención personalizada y coordinar métodos de pago.</p>
+                  <p><span className="text-white">ENTREGAS:</span> RORIMPORT coordina la logística de envío a nivel nacional bajo los tiempos y tarifas acordados durante la confirmación del pedido.</p>
+                  <p><span className="text-white">STOCK:</span> La disponibilidad está sujeta a confirmación final. Nos reservamos el derecho de cancelar órdenes si el producto no cumple con nuestros estándares de calidad antes del envío.</p>
+                </div>
               </section>
 
-              <section>
-                <h3 className="text-[#d4af37] text-[10px] font-black mb-2 tracking-[0.2em]">2. USO DE LA INFORMACIÓN</h3>
-                <p>Sus datos personales se utilizan exclusivamente para la gestión logística, confirmación de pedidos y entrega de productos. No compartimos ni vendemos su información a terceros con fines publicitarios.</p>
+              <section className="space-y-4">
+                <h3 className="text-[#d4af37] font-black tracking-[0.2em] border-b border-zinc-800 pb-2">POLÍTICA DE PRIVACIDAD</h3>
+                <div className="space-y-3">
+                  <p><span className="text-white">DATOS:</span> Recopilamos nombre, teléfono y dirección únicamente para la gestión de su pedido. No vendemos ni compartimos su información con terceros ajenos a la operación logística.</p>
+                  <p><span className="text-white">SEGURIDAD:</span> Utilizamos infraestructura de Firebase para el resguardo de la base de datos de productos, garantizando la integridad del sistema.</p>
+                  <p><span className="text-white">DERECHOS:</span> Para rectificar o eliminar sus datos de nuestros registros de envío, escriba a ventas@rorimport.com.</p>
+                </div>
               </section>
 
-              <section>
-                <h3 className="text-[#d4af37] text-[10px] font-black mb-2 tracking-[0.2em]">3. SEGURIDAD Y ALMACENAMIENTO</h3>
-                <p>Nuestra plataforma utiliza infraestructura de Firebase (Google Cloud) para garantizar la integridad y seguridad de la base de datos de productos y pedidos, manteniendo estándares de cifrado vigentes.</p>
-              </section>
-
-              <section>
-                <h3 className="text-[#d4af37] text-[10px] font-black mb-2 tracking-[0.2em]">4. CONTACTO</h3>
-                <p>Para solicitar la rectificación o eliminación de sus datos de nuestros registros de envío, puede contactarnos directamente a través de ventas@rorimport.com.</p>
-              </section>
             </div>
             
             <div className="mt-10 pt-6 border-t border-zinc-800">
               <button 
-                onClick={() => setShowPrivacy(false)}
+                onClick={() => setShowLegal(false)}
                 className="w-full py-4 bg-white text-black font-black text-[10px] uppercase tracking-[0.3em] rounded-xl hover:bg-[#d4af37] transition-colors"
               >
-                Entendido
+                Aceptar y Cerrar
               </button>
             </div>
           </div>
