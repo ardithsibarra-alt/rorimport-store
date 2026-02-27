@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { db } from '../lib/firebase';
-import { collection, onSnapshot, query, where } from 'firebase/firestore';
+import { collection, onSnapshot, query } from 'firebase/firestore';
 import { X, Box, ShoppingBag, Ruler, Palette } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 
@@ -132,14 +132,16 @@ export default function ProductGallery() {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
-    const q = query(collection(db, "productos"), where("status", "==", "active"));
+    const q = query(collection(db, "productos"));
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const activeProds = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      console.log("Productos cargados:", activeProds.length); // Ver en consola
+      const allProds = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const activeProds = allProds.filter((p: any) => 
+        Number(p.stock) > 0 && p.inhabilitado !== true
+      );
       setProducts(activeProds as any);
       setLoading(false);
     }, (error) => {
-      console.error("Error en Firebase:", error);
+      console.error("Error:", error);
       setLoading(false);
     });
     return () => unsubscribe();
