@@ -6,10 +6,11 @@ import { useCart } from '../context/CartContext';
 
 const robotoStyle = { fontFamily: "'Roboto Condensed', sans-serif" };
 
+// --- COMPONENTE DEL MODAL (DENTRO DEL MISMO ARCHIVO PARA EVITAR ERRORES) ---
 function ProductDetailsModal({ product, isOpen, onClose }: any) {
   const { addToCart } = useCart();
-  const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
-  const [selectedColors, setSelectedColors] = useState<string[]>([]);
+  const [selectedSize, setSelectedSize] = useState<string>("");
+  const [selectedColor, setSelectedColor] = useState<string>("");
 
   if (!isOpen || !product) return null;
 
@@ -18,41 +19,32 @@ function ProductDetailsModal({ product, isOpen, onClose }: any) {
   const colores = (mostrarVariantes && Array.isArray(product.colores)) ? product.colores : [];
   const tieneStock = Number(product.stock) > 0;
 
+  // LÓGICA DE BLOQUEO: Solo bloquea si hay opciones y no se han marcado
   const seleccionIncompleta = () => {
     if (!mostrarVariantes) return false;
-    const necesitaTalla = tallas.length > 0;
-    const necesitaColor = colores.length > 0;
-    const faltaTalla = necesitaTalla && selectedSizes.length === 0;
-    const faltaColor = necesitaColor && selectedColors.length === 0;
+    const faltaTalla = tallas.length > 0 && !selectedSize;
+    const faltaColor = colores.length > 0 && !selectedColor;
     return faltaTalla || faltaColor;
   };
 
   const estaBloqueado = !tieneStock || seleccionIncompleta();
 
-  const toggleColor = (color: string) => {
-    setSelectedColors([color]);
-  };
-
-  const toggleSize = (talla: string) => {
-    setSelectedSizes([talla]);
-  };
-
   const handleAdd = () => {
     if (estaBloqueado) return;
-    const variantName = `${product.nombre} ${selectedColors.length > 0 ? `(${selectedColors.join(', ')})` : ''} ${selectedSizes.length > 0 ? `- Tallas: ${selectedSizes.join(', ')}` : ''}`;
+    const variantName = `${product.nombre} ${selectedColor ? `(${selectedColor})` : ''} ${selectedSize ? `- ${selectedSize}` : ''}`;
     
     addToCart({
-      id: `${product.id}-${selectedColors.sort().join('-')}-${selectedSizes.sort().join('-')}`,
+      id: `${product.id}-${selectedColor}-${selectedSize}`,
       name: variantName,
       price: product.precio,
       image: product.imagen || product.image,
       quantity: 1,
-      selectedSize: mostrarVariantes ? selectedSizes.join(', ') : 'N/A',
-      selectedColor: mostrarVariantes ? selectedColors.join(', ') : 'N/A'
+      selectedSize: selectedSize || 'N/A',
+      selectedColor: selectedColor || 'N/A'
     });
     
-    setSelectedColors([]);
-    setSelectedSizes([]);
+    setSelectedColor("");
+    setSelectedSize("");
     onClose();
   };
 
@@ -61,78 +53,61 @@ function ProductDetailsModal({ product, isOpen, onClose }: any) {
       <style>{`
         .no-scrollbar::-webkit-scrollbar { display: none !important; width: 0 !important; }
         .no-scrollbar { -ms-overflow-style: none !important; scrollbar-width: none !important; }
-      `}</style>
+      `}`</style>
 
       <div className="relative bg-white w-full max-w-[1100px] h-full md:h-auto md:max-h-[90vh] md:rounded-[3rem] shadow-2xl flex flex-col md:flex-row overflow-hidden animate-in zoom-in duration-300">
         
-        <button 
-          onClick={onClose} 
-          className="absolute top-4 right-4 md:top-8 md:right-8 z-[110] p-3 bg-white/90 hover:bg-black hover:text-white rounded-full shadow-lg transition-all"
-        >
+        {/* BOTÓN CERRAR */}
+        <button onClick={onClose} className="absolute top-4 right-4 md:top-8 md:right-8 z-[110] p-3 bg-white/90 hover:bg-black hover:text-white rounded-full shadow-lg transition-all">
           <X size={20}/>
         </button>
         
-        <div className="w-full md:w-1/2 bg-[#f3f4f6] flex items-center justify-center p-8 md:p-20 shrink-0 h-[40vh] md:h-auto">
-          <img 
-            src={product.imagen || product.image} 
-            alt={product.nombre} 
-            className="w-full h-full object-contain mix-blend-multiply" 
-          />
+        {/* IMAGEN: 40% en móvil, 50% en PC */}
+        <div className="w-full md:w-1/2 bg-[#f3f4f6] flex items-center justify-center p-8 md:p-20 shrink-0 h-[35vh] md:h-auto">
+          <img src={product.imagen || product.image} alt={product.nombre} className="w-full h-full object-contain mix-blend-multiply" />
         </div>
 
+        {/* INFO: Centrada y sin scrollbar visible */}
         <div className="w-full md:w-1/2 p-6 md:p-16 flex flex-col justify-center bg-white overflow-y-auto no-scrollbar">
-          <div className="mb-4 md:mb-8">
+          <div className="mb-4">
             <p className="text-[10px] font-black text-[#d4af37] uppercase tracking-[0.4em] mb-2">{product.categoria}</p>
-            <h2 className="text-3xl md:text-5xl font-serif italic text-black leading-tight uppercase tracking-tighter mb-2 md:mb-4">{product.nombre}</h2>
+            <h2 className="text-3xl md:text-5xl font-serif italic text-black leading-tight uppercase tracking-tighter mb-2">{product.nombre}</h2>
             <p className="text-4xl md:text-5xl font-black text-black" style={robotoStyle}>${product.precio}</p>
           </div>
 
-          <div className="space-y-6 md:space-y-10 flex-grow">
-            {mostrarVariantes && colores.length > 0 && (
+          <div className="space-y-6 md:space-y-10">
+            {colores.length > 0 && (
               <div className="space-y-3">
-                <div className="flex items-center gap-2 text-black">
-                  <Palette size={14} />
-                  <span className="text-[9px] font-black uppercase tracking-widest text-zinc-400">Colores</span>
+                <div className="flex items-center gap-2 text-black font-black uppercase text-[10px] tracking-widest">
+                  <Palette size={14} /> COLORES
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {colores.map(c => (
-                    <button 
-                      key={c} 
-                      onClick={() => toggleColor(c)} 
-                      className={`px-4 py-2 rounded-xl border-2 text-[10px] font-black uppercase transition-all flex items-center gap-2 ${selectedColors.includes(c) ? 'bg-black text-white border-black shadow-md' : 'border-zinc-100 text-zinc-400 hover:border-zinc-300'}`}
-                    >
-                      {c}
-                    </button>
+                    <button key={c} onClick={() => setSelectedColor(c)} className={`px-4 py-2 rounded-xl border-2 text-[10px] font-black uppercase transition-all ${selectedColor === c ? 'bg-black text-white border-black' : 'border-zinc-100 text-zinc-400'}`}>{c}</button>
                   ))}
                 </div>
               </div>
             )}
 
-            {mostrarVariantes && tallas.length > 0 && (
+            {tallas.length > 0 && (
               <div className="space-y-3">
-                <div className="flex items-center gap-2 text-black">
-                  <Ruler size={14} />
-                  <span className="text-[9px] font-black uppercase tracking-widest text-zinc-400">Tallas</span>
+                <div className="flex items-center gap-2 text-black font-black uppercase text-[10px] tracking-widest">
+                  <Ruler size={14} /> TALLAS
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {tallas.map(t => (
-                    <button 
-                      key={t} 
-                      onClick={() => toggleSize(t)} 
-                      className={`w-12 h-12 rounded-xl border-2 font-black text-xs transition-all flex items-center justify-center ${selectedSizes.includes(t) ? 'bg-black text-white border-black scale-105 shadow-md' : 'border-zinc-100 text-zinc-500 hover:border-zinc-300'}`}
-                    >
-                      {t}
-                    </button>
+                    <button key={t} onClick={() => setSelectedSize(t)} className={`w-12 h-12 rounded-xl border-2 font-black text-xs transition-all flex items-center justify-center ${selectedSize === t ? 'bg-black text-white border-black' : 'border-zinc-100 text-zinc-500'}`}>{t}</button>
                   ))}
                 </div>
               </div>
             )}
             
             <div className="flex items-center gap-2 text-[10px] font-black uppercase text-zinc-400">
-               <Box size={14} /> STOCK: {product.stock}
+               <Box size={14} /> STOCK DISPONIBLE: {product.stock}
             </div>
           </div>
 
+          {/* BOTÓN DE ACCIÓN ÚNICO (Sin corazón) */}
           <div className="mt-8 md:mt-12">
             <button 
               disabled={estaBloqueado}
@@ -144,7 +119,7 @@ function ProductDetailsModal({ product, isOpen, onClose }: any) {
               }`}
             >
               <ShoppingBag size={20} />
-              {!tieneStock ? 'AGOTADO' : seleccionIncompleta() ? 'SELECCIONA TALLA Y COLOR' : 'AÑADIR AL CARRITO'}
+              {!tieneStock ? 'AGOTADO' : seleccionIncompleta() ? 'SELECCIONA OPCIONES' : 'AÑADIR AL CARRITO'}
             </button>
           </div>
         </div>
@@ -153,6 +128,7 @@ function ProductDetailsModal({ product, isOpen, onClose }: any) {
   );
 }
 
+// --- COMPONENTE DE LA GALERÍA ---
 export default function ProductGallery() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -160,27 +136,20 @@ export default function ProductGallery() {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
-    const q = query(
-      collection(db, "productos"),
-      where("status", "==", "active")
-    );
-
+    // Solo trae productos con status 'active'
+    const q = query(collection(db, "productos"), where("status", "==", "active"));
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const activeProds = snapshot.docs.map(doc => ({ 
-        id: doc.id, 
-        ...doc.data() 
-      }));
+      const activeProds = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setProducts(activeProds as any);
       setLoading(false);
     }, (error) => {
       console.error(error);
       setLoading(false);
     });
-
     return () => unsubscribe();
   }, []);
 
-  if (loading) return <div className="py-20 text-center font-black tracking-[0.5em] text-zinc-300 animate-pulse">CARGANDO...</div>;
+  if (loading) return <div className="py-20 text-center font-black tracking-[0.5em] text-zinc-300">CARGANDO...</div>;
 
   return (
     <section id="productos" className="py-20 bg-white">
@@ -189,11 +158,7 @@ export default function ProductGallery() {
           {products.map((p: any) => (
             <div key={p.id} onClick={() => { setSelectedProduct(p); setIsModalOpen(true); }} className="cursor-pointer group">
               <div className="relative aspect-[3/4] overflow-hidden bg-[#F9F9F9] rounded-[2rem] mb-6 shadow-sm group-hover:shadow-xl transition-all duration-500">
-                <img 
-                  src={p.imagen || p.image} 
-                  alt={p.nombre} 
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
-                />
+                <img src={p.imagen || p.image} alt={p.nombre} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
               </div>
               <p className="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-1">{p.categoria}</p>
               <h3 className="font-serif italic text-base uppercase text-black mb-1 leading-none">{p.nombre}</h3>
@@ -202,7 +167,13 @@ export default function ProductGallery() {
           ))}
         </div>
       </div>
-      <ProductDetailsModal product={selectedProduct} isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+      
+      {/* El modal se llama desde aquí mismo */}
+      <ProductDetailsModal 
+        product={selectedProduct} 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+      />
     </section>
   );
 }
