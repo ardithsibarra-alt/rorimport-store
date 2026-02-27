@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { db } from '../lib/firebase';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
-import { X, Box, ShoppingBag, Ruler, Palette, Check } from 'lucide-react';
+import { X, Box, ShoppingBag, Ruler, Palette } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 
 const robotoStyle = { fontFamily: "'Roboto Condensed', sans-serif" };
 
-// --- COMPONENTE DEL MODAL (DENTRO DEL MISMO ARCHIVO PARA EVITAR ERRORES) ---
-function ProductDetailsModal({ product, isOpen, onClose }: any) {
+// He cambiado el nombre a "ModalVistaUnica" para que no choque con archivos viejos
+function ModalVistaUnica({ product, isOpen, onClose }: any) {
   const { addToCart } = useCart();
   const [selectedSize, setSelectedSize] = useState<string>("");
   const [selectedColor, setSelectedColor] = useState<string>("");
@@ -19,7 +19,6 @@ function ProductDetailsModal({ product, isOpen, onClose }: any) {
   const colores = (mostrarVariantes && Array.isArray(product.colores)) ? product.colores : [];
   const tieneStock = Number(product.stock) > 0;
 
-  // LÓGICA DE BLOQUEO: Solo bloquea si hay opciones y no se han marcado
   const seleccionIncompleta = () => {
     if (!mostrarVariantes) return false;
     const faltaTalla = tallas.length > 0 && !selectedSize;
@@ -51,23 +50,25 @@ function ProductDetailsModal({ product, isOpen, onClose }: any) {
   return (
     <div className="fixed inset-0 z-[10000] flex items-center justify-center p-0 md:p-4 bg-black/95 backdrop-blur-md">
       <style>{`
-        .no-scrollbar::-webkit-scrollbar { display: none !important; width: 0 !important; }
-        .no-scrollbar { -ms-overflow-style: none !important; scrollbar-width: none !important; }
-      `}`</style>
+        /* Bloque de corrección de Scroll */
+        .no-scrollbar::-webkit-scrollbar { display: none !important; }
+        .no-scrollbar { 
+          -ms-overflow-style: none !important; 
+          scrollbar-width: none !important; 
+          overflow-y: auto !important;
+        }
+      `}</style>
 
       <div className="relative bg-white w-full max-w-[1100px] h-full md:h-auto md:max-h-[90vh] md:rounded-[3rem] shadow-2xl flex flex-col md:flex-row overflow-hidden animate-in zoom-in duration-300">
         
-        {/* BOTÓN CERRAR */}
         <button onClick={onClose} className="absolute top-4 right-4 md:top-8 md:right-8 z-[110] p-3 bg-white/90 hover:bg-black hover:text-white rounded-full shadow-lg transition-all">
           <X size={20}/>
         </button>
         
-        {/* IMAGEN: 40% en móvil, 50% en PC */}
         <div className="w-full md:w-1/2 bg-[#f3f4f6] flex items-center justify-center p-8 md:p-20 shrink-0 h-[35vh] md:h-auto">
           <img src={product.imagen || product.image} alt={product.nombre} className="w-full h-full object-contain mix-blend-multiply" />
         </div>
 
-        {/* INFO: Centrada y sin scrollbar visible */}
         <div className="w-full md:w-1/2 p-6 md:p-16 flex flex-col justify-center bg-white overflow-y-auto no-scrollbar">
           <div className="mb-4">
             <p className="text-[10px] font-black text-[#d4af37] uppercase tracking-[0.4em] mb-2">{product.categoria}</p>
@@ -107,7 +108,6 @@ function ProductDetailsModal({ product, isOpen, onClose }: any) {
             </div>
           </div>
 
-          {/* BOTÓN DE ACCIÓN ÚNICO (Sin corazón) */}
           <div className="mt-8 md:mt-12">
             <button 
               disabled={estaBloqueado}
@@ -128,7 +128,6 @@ function ProductDetailsModal({ product, isOpen, onClose }: any) {
   );
 }
 
-// --- COMPONENTE DE LA GALERÍA ---
 export default function ProductGallery() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -136,7 +135,6 @@ export default function ProductGallery() {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
-    // Solo trae productos con status 'active'
     const q = query(collection(db, "productos"), where("status", "==", "active"));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const activeProds = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -168,8 +166,8 @@ export default function ProductGallery() {
         </div>
       </div>
       
-      {/* El modal se llama desde aquí mismo */}
-      <ProductDetailsModal 
+      {/* Llamada al nuevo nombre del componente */}
+      <ModalVistaUnica 
         product={selectedProduct} 
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 
