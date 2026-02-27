@@ -83,10 +83,17 @@ function ModalVistaUnica({ product, isOpen, onClose }: any) {
         </div>
 
         <div className="w-full md:w-1/2 p-6 md:p-16 flex flex-col justify-center bg-white overflow-y-auto no-scrollbar">
-          <div className="mb-4">
+          <div className="mb-6">
             <p className="text-[10px] font-black text-[#d4af37] uppercase tracking-[0.4em] mb-2">{product.categoria}</p>
             <h2 className="text-3xl md:text-5xl font-serif italic text-black leading-tight uppercase tracking-tighter mb-2">{product.nombre}</h2>
-            <p className="text-4xl md:text-5xl font-black text-black" style={robotoStyle}>${product.precio}</p>
+            <p className="text-4xl md:text-5xl font-black text-black mb-4" style={robotoStyle}>${product.precio}</p>
+            
+            {/* Sección de Descripción */}
+            {product.descripcion && (
+              <p className="text-zinc-500 text-sm md:text-base font-medium leading-relaxed max-w-md">
+                {product.descripcion}
+              </p>
+            )}
           </div>
 
           <div className="space-y-6 md:space-y-10">
