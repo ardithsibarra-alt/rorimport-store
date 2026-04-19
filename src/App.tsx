@@ -1,7 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import React, { useState, useEffect } from 'react';
-import { db } from './lib/firebase';
-import { doc, onSnapshot } from 'firebase/firestore';
+import { getStoreConfig } from './lib/inventory';
 import { Clock } from 'lucide-react';
 
 import Header from './components/Header';
@@ -25,7 +24,6 @@ const GlobalStyles = () => (
       font-family: var(--font-main);
     }
 
-    /* Forzamos que nada tenga colitas */
     .font-serif, h1, h2, h3, h4 {
       font-family: var(--font-main) !important;
       font-variant-ligatures: none;
@@ -56,13 +54,19 @@ function StoreFront() {
   const [isMaintenance, setIsMaintenance] = useState(false);
 
   useEffect(() => {
-    const unsub = onSnapshot(doc(db, "configuracion", "tienda"), (snapshot) => {
-      if (snapshot.exists()) {
-        setIsMaintenance(snapshot.data().modoMantenimiento);
+    async function checkMaintenance() {
+      try {
+        const config = await getStoreConfig();
+        if (config) {
+          setIsMaintenance(config.modoMantenimiento);
+        }
+      } catch (error) {
+        console.error("Error cargando configuración:", error);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
-    });
-    return () => unsub();
+    }
+    checkMaintenance();
   }, []);
 
   if (loading) return (
