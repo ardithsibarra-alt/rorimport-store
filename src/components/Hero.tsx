@@ -1,18 +1,24 @@
 import { useEffect, useState } from 'react';
-import { db } from '../lib/firebase';
-import { doc, onSnapshot } from 'firebase/firestore';
+import { supabase } from '../lib/supabase';
 import { ShoppingBag, Globe, ArrowRight, Sparkles } from 'lucide-react';
 
 export default function Hero() {
   const [mensajeBanner, setMensajeBanner] = useState('');
 
   useEffect(() => {
-    const unsubscribe = onSnapshot(doc(db, "configuracion", "tienda"), (docSnap) => {
-      if (docSnap.exists()) {
-        setMensajeBanner(docSnap.data().bannerTexto || docSnap.data().mensaje);
+    const fetchBanner = async () => {
+      const { data, error } = await supabase
+        .from('configuracion')
+        .select('bannerTexto, mensaje')
+        .eq('id', 'tienda') // O el identificador que uses en tu tabla
+        .single();
+
+      if (!error && data) {
+        setMensajeBanner(data.bannerTexto || data.mensaje);
       }
-    });
-    return () => unsubscribe();
+    };
+
+    fetchBanner();
   }, []);
 
   const scrollToSection = (sectionId: string) => {
@@ -26,7 +32,6 @@ export default function Hero() {
     }
   };
 
-  // Definimos la fuente limpia (Sans Serif) para asegurar que no use la de antes
   const seriousFont = { fontFamily: "'Inter', sans-serif" };
 
   return (
@@ -49,13 +54,12 @@ export default function Hero() {
                   <Sparkles size={18} className="animate-pulse" />
                   <span className="text-[10px] font-black uppercase tracking-[0.5em]">Exclusividad al alcance de tus manos</span>
                 </div>
-                {/* Texto imponente, sin colitas y en mayúsculas */}
                 <h2 
-  style={seriousFont}
-  className="text-3xl md:text-5xl lg:text-6xl font-black uppercase leading-none tracking-tighter text-white mb-6 whitespace-nowrap"
->
-  {mensajeBanner}
-</h2>
+                  style={seriousFont}
+                  className="text-3xl md:text-5xl lg:text-6xl font-black uppercase leading-none tracking-tighter text-white mb-6 whitespace-nowrap"
+                >
+                  {mensajeBanner}
+                </h2>
                 <div className="w-24 h-[2px] bg-[#d4af37]"></div>
               </div>
             ) : (
