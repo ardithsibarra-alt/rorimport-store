@@ -1,7 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { db, auth } from '../lib/firebase';
-import { signInWithEmailAndPassword, onAuthStateChanged, signOut } from 'firebase/auth';
-import { collection, query, orderBy, onSnapshot, updateDoc, doc, deleteDoc, addDoc, serverTimestamp } from 'firebase/firestore';
+import { supabase } from '../lib/supabase';
 import { 
   Phone, MapPin, CheckCircle, Lock, Trash2, DollarSign, AlertTriangle, Save, 
   Plus, X, Upload, Loader2, Edit2, Globe, Truck, Package, Tag, Clock, ChevronDown, LogOut, Eye, EyeOff
@@ -16,9 +14,12 @@ function EditableAmount({ orderId, currentAmount }) {
   const save = async () => {
     try {
       const numericValue = parseFloat(value) || 0;
-      await updateDoc(doc(db, "pedidos", orderId), {
-        total: numericValue
-      });
+      const { error } = await supabase
+        .from('pedidos')
+        .update({ total: numericValue })
+        .eq('id', orderId);
+
+      if (error) throw error;
       setIsEditing(false);
     } catch (e) {
       alert("Error al actualizar monto");
@@ -74,54 +75,66 @@ export default function AdminDashboard() {
   });
 
   useEffect(() => {
-    const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
     });
-    return () => unsubscribeAuth();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   useEffect(() => {
     if (!user) return;
-    
-    const unsubOrders = onSnapshot(query(collection(db, "pedidos"), orderBy("fecha", "desc")), (snapshot) => {
-      setOrders(snapshot.docs.map(doc => {
-        const data = doc.data();
-        let totalCalculado = data.total || 0;
-        
-        if (!totalCalculado && data.items) {
-          totalCalculado = data.items.reduce((acc, item) => acc + (Number(item.precio || 0) * (item.cantidad || 1)), 0);
-        }
 
-        return { id: doc.id, ...data, total: totalCalculado };
-      }));
-    });
+    const fetchInitialData = async () => {
+      const { data: ordersData } = await supabase.from('pedidos').select('*').order('fecha', { ascending: false });
+      if (ordersData) setOrders(ordersData);
 
-    const unsubProducts = onSnapshot(collection(db, "productos"), (snapshot) => {
-      const prods = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setProducts(prods);
+      const { data: productsData } = await supabase.from('productos').select('*');
+      if (productsData) {
+        setProducts(productsData);
+        const uniqueCats = [...new Set(productsData.map(p => p.categoria))].filter(Boolean);
+        setCategories([...new Set(["ROPA", "CALZADO", "GYM", "HOGAR", "ACCESORIOS", ...uniqueCats])]);
+      }
 
-      const uniqueCats = [...new Set(prods.map(p => p.categoria))].filter(Boolean);
-      const baseCats = ["ROPA", "CALZADO", "GYM", "HOGAR", "ACCESORIOS"];
-      setCategories([...new Set([...baseCats, ...uniqueCats])]);
-    });
+      const { data: configData } = await supabase.from('configuracion').select('*').eq('id', 'tienda').single();
+      if (configData) setConfig(configData);
+    };
 
-    const unsubConfig = onSnapshot(doc(db, "configuracion", "tienda"), (snapshot) => {
-      if (snapshot.exists()) setConfig(snapshot.data());
-    });
+    fetchInitialData();
 
-    return () => { unsubOrders(); unsubProducts(); unsubConfig(); };
+    const ordersSubscription = supabase
+      .channel('public:pedidos')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'pedidos' }, () => fetchInitialData())
+      .subscribe();
+
+    const productsSubscription = supabase
+      .channel('public:productos')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'productos' }, () => fetchInitialData())
+      .subscribe();
+
+    const configSubscription = supabase
+      .channel('public:configuracion')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'configuracion' }, () => fetchInitialData())
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(ordersSubscription);
+      supabase.removeChannel(productsSubscription);
+      supabase.removeChannel(configSubscription);
+    };
   }, [user]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    try {
-      await signInWithEmailAndPassword(auth, email, password);
-    } catch (error) {
-      alert("Credenciales incorrectas o usuario no autorizado");
-    }
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) alert("Credenciales incorrectas o usuario no autorizado");
   };
 
-  const handleLogout = () => signOut(auth);
+  const handleLogout = () => supabase.auth.signOut();
 
   const stats = orders.reduce((acc, order) => {
     const monto = Number(order.total || 0);
@@ -134,10 +147,10 @@ export default function AdminDashboard() {
 
   const handleCompletarPedido = async (orderId) => {
     try {
-      await updateDoc(doc(db, "pedidos", orderId), { 
+      await supabase.from('pedidos').update({ 
         estado: 'completado',
-        fechaEntrega: serverTimestamp()
-      });
+        fechaEntrega: new Date().toISOString()
+      }).eq('id', orderId);
     } catch (e) {
       alert("Error al actualizar");
     }
@@ -145,9 +158,9 @@ export default function AdminDashboard() {
 
   const toggleInhabilitar = async (prod) => {
     try {
-      await updateDoc(doc(db, "productos", prod.id), {
+      await supabase.from('productos').update({
         inhabilitado: !prod.inhabilitado
-      });
+      }).eq('id', prod.id);
     } catch (e) {
       alert("Error al cambiar estado");
     }
@@ -186,12 +199,13 @@ export default function AdminDashboard() {
     if (!newProduct.categoria) return alert("Escribe o selecciona una categoría");
     
     try {
-      await addDoc(collection(db, "productos"), {
+      const { error } = await supabase.from('productos').insert([{
         ...newProduct,
         precio: Number(newProduct.precio),
         stock: Number(newProduct.stock),
-        fechaCreacion: serverTimestamp()
-      });
+        fechaCreacion: new Date().toISOString()
+      }]);
+      if (error) throw error;
       setIsModalOpen(false);
       setNewProduct({ nombre: '', precio: '', imagen: '', categoria: '', stock: '', descripcion: '', aplicaVariantes: false, tallas: [], colores: [], inhabilitado: false });
     } catch (error) {
@@ -264,9 +278,9 @@ export default function AdminDashboard() {
                 <div className="flex-1">
                   <div className="flex items-center justify-between mb-6">
                     <div className="flex items-center gap-3">
-                      <span className="text-[9px] font-black bg-zinc-100 px-2 py-1 rounded" style={robotoStyle}>ID: {order.id.toUpperCase()}</span>
-                      <span className={`text-[8px] font-black px-2 py-1 rounded uppercase italic ${order.id.includes('-I') ? 'bg-blue-100 text-blue-700' : 'bg-zinc-100 text-zinc-800'}`} style={robotoStyle}>
-                        {order.id.includes('-I') ? 'Internacional' : 'Nacional'}
+                      <span className="text-[9px] font-black bg-zinc-100 px-2 py-1 rounded" style={robotoStyle}>ID: {String(order.id).toUpperCase()}</span>
+                      <span className={`text-[8px] font-black px-2 py-1 rounded uppercase italic ${String(order.id).includes('-I') ? 'bg-blue-100 text-blue-700' : 'bg-zinc-100 text-zinc-800'}`} style={robotoStyle}>
+                        {String(order.id).includes('-I') ? 'Internacional' : 'Nacional'}
                       </span>
                     </div>
 
@@ -274,14 +288,14 @@ export default function AdminDashboard() {
                       <div className="text-right">
                         <p className="text-[7px] font-black text-zinc-400 uppercase tracking-widest" style={robotoStyle}>Ingreso</p>
                         <p className="text-[10px] font-black text-zinc-900" style={robotoStyle}>
-                          {order.fecha?.toDate ? order.fecha.toDate().toLocaleString('es-VE', { dateStyle: 'short', timeStyle: 'short' }) : '...'}
+                          {order.fecha ? new Date(order.fecha).toLocaleString('es-VE', { dateStyle: 'short', timeStyle: 'short' }) : '...'}
                         </p>
                       </div>
                       {order.fechaEntrega && (
                         <div className="text-right border-l pl-6 border-zinc-100">
                           <p className="text-[7px] font-black text-green-500 uppercase tracking-widest" style={robotoStyle}>Entregado</p>
                           <p className="text-[10px] font-black text-green-600" style={robotoStyle}>
-                            {order.fechaEntrega?.toDate ? order.fechaEntrega.toDate().toLocaleString('es-VE', { dateStyle: 'short', timeStyle: 'short' }) : '...'}
+                            {new Date(order.fechaEntrega).toLocaleString('es-VE', { dateStyle: 'short', timeStyle: 'short' })}
                           </p>
                         </div>
                       )}
@@ -309,7 +323,9 @@ export default function AdminDashboard() {
                 </div>
 
                 <div className="flex md:flex-col gap-2">
-                  <button onClick={() => confirm("Eliminar?") && deleteDoc(doc(db, "pedidos", order.id))} className="p-4 bg-zinc-50 text-zinc-300 hover:text-red-500 hover:bg-red-50 rounded-2xl transition-all"><Trash2 size={20}/></button>
+                  <button onClick={async () => {
+                    if (confirm("Eliminar?")) await supabase.from('pedidos').delete().eq('id', order.id);
+                  }} className="p-4 bg-zinc-50 text-zinc-300 hover:text-red-500 hover:bg-red-50 rounded-2xl transition-all"><Trash2 size={20}/></button>
                   
                   {order.estado !== 'completado' ? (
                     <button 
@@ -362,7 +378,9 @@ export default function AdminDashboard() {
                         {prod.inhabilitado ? <Eye size={14}/> : <EyeOff size={14}/>}
                       </button>
                       <button 
-                        onClick={() => confirm("Eliminar?") && deleteDoc(doc(db, "productos", prod.id))} 
+                        onClick={async () => {
+                          if (confirm("Eliminar?")) await supabase.from('productos').delete().eq('id', prod.id);
+                        }} 
                         className="p-2 bg-white/90 rounded-lg text-red-500 opacity-0 group-hover:opacity-100 transition-opacity shadow-sm"
                       >
                         <Trash2 size={14}/>
@@ -389,7 +407,9 @@ export default function AdminDashboard() {
                         <input 
                           type="number" 
                           defaultValue={prod.stock} 
-                          onBlur={(e) => updateDoc(doc(db, "productos", prod.id), { stock: parseInt(e.target.value) })} 
+                          onBlur={async (e) => {
+                            await supabase.from('productos').update({ stock: parseInt(e.target.value) }).eq('id', prod.id);
+                          }} 
                           className="w-10 text-right font-black text-xs focus:text-blue-600 outline-none bg-transparent" 
                           style={robotoStyle} 
                         />
@@ -426,7 +446,10 @@ export default function AdminDashboard() {
                   <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-all ${config.modoMantenimiento ? 'right-0.5' : 'left-0.5'}`} />
                 </button>
               </div>
-              <button onClick={async () => { await updateDoc(doc(db, "configuracion", "tienda"), config); alert("Sincronizado"); }} className="w-full bg-black text-white py-4 rounded-xl font-black uppercase text-[10px] tracking-widest flex items-center justify-center gap-3 shadow-lg hover:bg-zinc-800 transition-all" style={robotoStyle}>
+              <button onClick={async () => { 
+                await supabase.from('configuracion').update(config).eq('id', 'tienda'); 
+                alert("Sincronizado"); 
+              }} className="w-full bg-black text-white py-4 rounded-xl font-black uppercase text-[10px] tracking-widest flex items-center justify-center gap-3 shadow-lg hover:bg-zinc-800 transition-all" style={robotoStyle}>
                 <Save size={16}/> Guardar Cambios
               </button>
             </div>
