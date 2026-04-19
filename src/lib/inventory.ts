@@ -8,7 +8,7 @@ export const getProducts = async (): Promise<Product[]> => {
     .order('fecha_creacion', { ascending: false });
 
   if (error) {
-    console.error('Error al cargar productos:', error);
+    console.error('Error:', error);
     return [];
   }
   return data as Product[];
@@ -21,10 +21,7 @@ export const getStoreConfig = async () => {
     .eq('id', 1)
     .single();
 
-  if (error) {
-    console.error('Error al cargar configuración:', error);
-    return null;
-  }
+  if (error) return null;
   return data;
 };
 
