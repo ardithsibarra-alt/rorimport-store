@@ -1,8 +1,7 @@
 import { ShoppingCart, Menu, X } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useCart } from '../context/CartContext';
-import { db } from '../lib/firebase';
-import { doc, onSnapshot } from 'firebase/firestore';
+import { supabase } from '../lib/supabase';
 import CartModal from './CartModal';
 
 export default function Header() {
@@ -15,12 +14,20 @@ export default function Header() {
   const robotoStyle = { fontFamily: "'Roboto Condensed'" };
 
   useEffect(() => {
-    const unsub = onSnapshot(doc(db, "configuracion", "tienda"), (snapshot) => {
-      if (snapshot.exists()) {
-        const data = snapshot.data();
+    // Reemplazo de onSnapshot por consulta a Supabase
+    const checkBanner = async () => {
+      const { data, error } = await supabase
+        .from('configuracion')
+        .select('bannerTexto')
+        .eq('id', 'tienda')
+        .single();
+
+      if (!error && data) {
         setHasBanner(!!data.bannerTexto);
       }
-    });
+    };
+
+    checkBanner();
 
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 10);
@@ -28,7 +35,6 @@ export default function Header() {
 
     window.addEventListener('scroll', handleScroll);
     return () => {
-      unsub();
       window.removeEventListener('scroll', handleScroll);
     };
   }, []);
