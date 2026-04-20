@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Send, Link as LinkIcon, User, MapPin, Phone, Hash, Info } from 'lucide-react';
-import { db } from '../lib/firebase';
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore'; // Importamos setDoc y doc
+import { supabase } from '../lib/supabase';
 
 export default function InternationalOrders() {
   const [orderCode, setOrderCode] = useState('');
@@ -31,28 +30,32 @@ export default function InternationalOrders() {
     if (!isFormValid) return;
     
     try {
-      // Usamos setDoc para que el ID del documento en Firebase sea el Tracking ID
-      await setDoc(doc(db, "pedidos", orderCode), {
-        id: orderCode,
-        codigoPedido: orderCode,
-        cliente: {
-          nombre: formData.fullName,
-          cedula: formData.idNumber,
-          telefono: formData.phone,
-          direccion: formData.address,
-        },
-        items: [{
-          nombre: `ENCARGO INTERNACIONAL`,
-          url: formData.link,
-          cantidad: 1,
-          precio: 0 
-        }],
-        total: 0, // Campo total para que el Admin lo reconozca y permita editarlo después
-        referencia: "COTIZACIÓN PENDIENTE",
-        fecha: serverTimestamp(),
-        status: 'Pendiente',
-        tipo: 'Internacional'
-      });
+      // Usamos insert de Supabase para registrar el pedido
+      const { error } = await supabase
+        .from('pedidos')
+        .insert([{
+          id: orderCode,
+          codigo_pedido: orderCode,
+          cliente: {
+            nombre: formData.fullName,
+            cedula: formData.idNumber,
+            telefono: formData.phone,
+            direccion: formData.address,
+          },
+          items: [{
+            nombre: `ENCARGO INTERNACIONAL`,
+            url: formData.link,
+            cantidad: 1,
+            precio: 0 
+          }],
+          total: 0,
+          referencia: "COTIZACIÓN PENDIENTE",
+          status: 'Pendiente',
+          tipo: 'Internacional',
+          created_at: new Date().toISOString()
+        }]);
+
+      if (error) throw error;
 
       const message = encodeURIComponent(
         `RORIMPORT - SOLICITUD DE IMPORTACIÓN\n` +
@@ -69,13 +72,14 @@ export default function InternationalOrders() {
       
       window.open(`https://wa.me/584128209111?text=${message}`, '_blank');
       
+      // Resetear formulario y generar nuevo código
       setFormData({ fullName: '', idNumber: '', phone: '', address: '', link: '' });
       const nextNum = Math.floor(10000 + Math.random() * 90000);
       setOrderCode(`ROR-I${nextNum}`);
 
     } catch (error) {
       console.error(error);
-      alert("Error en el registro.");
+      alert("Error en el registro del pedido internacional.");
     }
   };
 
