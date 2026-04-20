@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Minus, Plus, ShoppingBag, ArrowRight, Hash } from 'lucide-react';
 import { useCart } from '../context/CartContext';
-import { db } from '../lib/firebase';
-import { collection, setDoc, serverTimestamp, doc, runTransaction } from 'firebase/firestore';
+import { supabase } from '../lib/supabase';
 
 interface CartModalProps {
   isOpen: boolean;
@@ -35,63 +34,65 @@ export default function CartModal({ isOpen, onClose }: CartModalProps) {
     setCustomerData({ ...customerData, [e.target.name]: e.target.value });
   };
 
-  const processStockUpdate = async (cartItems: any[]) => {
-    await runTransaction(db, async (transaction) => {
-      const updates = cartItems.map(item => {
-        const baseId = item.id.split('-')[0];
-        return {
-          ref: doc(db, "productos", baseId),
-          qty: item.quantity,
-          name: item.name
-        };
-      });
-
-      const snapshots = await Promise.all(updates.map(u => transaction.get(u.ref)));
-
-      snapshots.forEach((snap, index) => {
-        if (!snap.exists()) throw new Error(`El producto ${updates[index].name} no existe.`);
-        const currentStock = Number(snap.data()?.stock) || 0;
-        const requestedQty = updates[index].qty;
-        if (currentStock < requestedQty) {
-          throw new Error(`Lo sentimos. Solo quedan ${currentStock} unidades de ${updates[index].name}.`);
-        }
-        transaction.update(updates[index].ref, {
-          stock: currentStock - requestedQty
-        });
-      });
-    });
-  };
-
   const handleCheckout = async () => {
     if (cart.length === 0 || loading) return;
     setLoading(true);
 
     try {
-      await processStockUpdate(cart);
+      // 1. Validar y actualizar stock para cada ítem en Supabase
+      for (const item of cart) {
+        const baseId = item.id.split('-')[0];
 
-      const pedidoRef = doc(db, "pedidos", orderCode);
-      
-      await setDoc(pedidoRef, {
-        id: orderCode,
-        codigoPedido: orderCode,
-        cliente: {
-          nombre: customerData.name,
-          telefono: customerData.phone,
-          direccion: customerData.address
-        },
-        items: cart.map(item => ({
-          nombre: item.name,
-          cantidad: item.quantity,
-          precio: item.price,
-          talla: item.selectedSize || 'N/A',
-          color: item.selectedColor || 'N/A'
-        })),
-        total: totalUSD,
-        fecha: serverTimestamp(),
-        status: 'Pendiente',
-        tipo: 'Nacional'
-      });
+        // Consultar stock actual del producto
+        const { data: producto, error: fetchError } = await supabase
+          .from('productos')
+          .select('stock, name')
+          .eq('id', baseId)
+          .single();
 
+        if (fetchError || !producto) throw new Error(`El producto ${item.name} no existe.`);
+
+        const currentStock = Number(producto.stock) || 0;
+        if (currentStock < item.quantity) {
+          throw new Error(`Lo sentimos. Solo quedan ${currentStock} unidades de ${item.name}.`);
+        }
+
+        // Actualizar el stock restando la cantidad comprada
+        const { error: updateError } = await supabase
+          .from('productos')
+          .update({ stock: currentStock - item.quantity })
+          .eq('id', baseId);
+
+        if (updateError) throw new Error(`Error al actualizar stock de ${item.name}`);
+      }
+
+      // 2. Registrar el pedido en la tabla 'pedidos'
+      const { error: orderError } = await supabase
+        .from('pedidos')
+        .insert([{
+          id: orderCode,
+          codigo_pedido: orderCode,
+          cliente: {
+            nombre: customerData.name,
+            telefono: customerData.phone,
+            direccion: customerData.address
+          },
+          items: cart.map(item => ({
+            nombre: item.name,
+            cantidad: item.quantity,
+            precio: item.price,
+            talla: item.selectedSize || 'N/A',
+            color: item.selectedColor || 'N/A'
+          })),
+          total: totalUSD,
+          status: 'Pendiente',
+          tipo: 'Nacional',
+          created_at: new Date().toISOString()
+        }]);
+
+      if (orderError) throw orderError;
+
+      // 3. Generar mensaje para WhatsApp
       let messageText = `RORIMPORT - NUEVA ORDEN #${orderCode}\n`;
       messageText += `------------------------------------------\n\n`;
       messageText += `CLIENTE: ${customerData.name.toUpperCase()}\n`;
@@ -113,6 +114,7 @@ export default function CartModal({ isOpen, onClose }: CartModalProps) {
 
       window.open(`https://wa.me/584224421040?text=${encodeURIComponent(messageText)}`, '_blank');
 
+      // 4. Limpiar el carrito y cerrar
       clearCart();
       setStep(1);
       setOrderCode('');
