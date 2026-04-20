@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { db } from '../lib/firebase';
-import { doc, onSnapshot } from 'firebase/firestore';
+import { supabase } from '../lib/supabase';
 import { Megaphone } from 'lucide-react';
 
 export default function TopBanner() {
@@ -9,13 +8,37 @@ export default function TopBanner() {
     modoMantenimiento: false
   });
 
+  const fetchConfig = async () => {
+    const { data, error } = await supabase
+      .from('configuracion')
+      .select('bannerTexto, modoMantenimiento')
+      .eq('id', 'tienda')
+      .single();
+
+    if (!error && data) {
+      setConfig(data);
+    }
+  };
+
   useEffect(() => {
-    const unsub = onSnapshot(doc(db, "configuracion", "tienda"), (doc) => {
-      if (doc.exists()) {
-        setConfig(doc.data() as any);
-      }
-    });
-    return () => unsub();
+    fetchConfig();
+
+    // Escuchar cambios en tiempo real en la tabla de configuración
+    const channel = supabase
+      .channel('public:configuracion')
+      .on('postgres_changes', { 
+        event: 'UPDATE', 
+        schema: 'public', 
+        table: 'configuracion',
+        filter: "id=eq.tienda" 
+      }, (payload) => {
+        setConfig(payload.new as any);
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   if (config.modoMantenimiento || !config.bannerTexto) return null;
