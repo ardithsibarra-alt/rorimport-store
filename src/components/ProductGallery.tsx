@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { db } from '../lib/firebase';
-import { collection, onSnapshot, query } from 'firebase/firestore';
-import { X, Box, ShoppingBag, Ruler, Palette, Check, Filter } from 'lucide-react';
+import { supabase } from '../lib/supabase';
+import { X, Box, ShoppingBag, Ruler, Palette, Check } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 
 const robotoStyle = { fontFamily: "'Roboto Condensed', sans-serif" };
@@ -88,7 +87,6 @@ function ModalVistaUnica({ product, isOpen, onClose }: any) {
             <h2 className="text-3xl md:text-5xl font-serif italic text-black leading-tight uppercase tracking-tighter mb-2">{product.nombre}</h2>
             <p className="text-4xl md:text-5xl font-black text-black mb-4" style={robotoStyle}>${product.precio}</p>
             
-            {/* Sección de Descripción */}
             {product.descripcion && (
               <p className="text-zinc-500 text-sm md:text-base font-medium leading-relaxed max-w-md">
                 {product.descripcion}
@@ -170,18 +168,33 @@ export default function ProductGallery() {
   const [activeCategory, setActiveCategory] = useState('TODOS');
 
   useEffect(() => {
-    const q = query(collection(db, "productos"));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const allProds = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      const activeProds = allProds.filter((p: any) => 
-        (Number(p.stock) || 0) > 0 && p.inhabilitado !== true
-      );
-      setProducts(activeProds);
+    // Configuración de suscripción en tiempo real con Supabase
+    const fetchProducts = async () => {
+      const { data, error } = await supabase
+        .from('productos')
+        .select('*')
+        .eq('inhabilitado', false)
+        .gt('stock', 0);
+
+      if (!error && data) {
+        setProducts(data);
+      }
       setLoading(false);
-    }, (error) => {
-      setLoading(false);
-    });
-    return () => unsubscribe();
+    };
+
+    fetchProducts();
+
+    // Suscripción a cambios para mantener la galería actualizada sin recargar
+    const channel = supabase
+      .channel('public:productos')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'productos' }, () => {
+        fetchProducts();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const categories = ['TODOS', ...new Set(products.map((p: any) => p.categoria).filter(Boolean))];
